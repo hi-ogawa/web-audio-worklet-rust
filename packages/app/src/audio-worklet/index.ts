@@ -1,3 +1,4 @@
+import "./polyfill";
 import initWasm, { Sine } from "@hiogawa/demo-wasm";
 import { memoize } from "lodash";
 import { tinyassert } from "../utils/tinyassert";

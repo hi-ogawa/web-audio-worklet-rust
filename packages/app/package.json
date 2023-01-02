@@ -14,6 +14,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.7",
     "@hiogawa/demo-wasm": "workspace:*",
+    "fastestsmallesttextencoderdecoder": "^1.0.22",
     "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

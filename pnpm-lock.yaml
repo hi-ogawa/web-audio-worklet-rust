@@ -26,6 +26,7 @@ importers:
       '@vitejs/plugin-react': ^3.0.0
       antd: ^5.1.2
       esbuild: ^0.16.12
+      fastestsmallesttextencoderdecoder: ^1.0.22
       lodash: ^4.17.21
       react: ^18.2.0
       react-dom: ^18.2.0
@@ -37,6 +38,7 @@ importers:
     dependencies:
       '@headlessui/react': 1.7.7_biqbaboplfbrettd7655fr4n2y
       '@hiogawa/demo-wasm': link:../wasm
+      fastestsmallesttextencoderdecoder: 1.0.22
       lodash: 4.17.21
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -1401,6 +1403,10 @@ packages:
 
   /fastest-stable-stringify/2.0.2:
     resolution: {integrity: sha512-bijHueCGd0LqqNK9b5oCMHc0MluJAx0cwqASgbWMvkO01lCYgIhacVRLcaDz3QnyYIRNJRDwMb41VuT6pHJ91Q==}
+    dev: false
+
+  /fastestsmallesttextencoderdecoder/1.0.22:
+    resolution: {integrity: sha512-Pb8d48e+oIuY4MaM64Cd7OW1gt4nxCHs7/ddPPZ/Ic3sg8yVGM7O9wDvZ7us6ScaUupzM+pfBolwtYhN1IxBIw==}
     dev: false
 
   /fastq/1.15.0:
