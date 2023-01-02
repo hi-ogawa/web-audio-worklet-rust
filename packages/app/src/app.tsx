@@ -159,9 +159,9 @@ function AppInner() {
         <div className="relative flex">
           {/* white keys */}
           {["C4", "D4", "E4", "F4", "G4", "A4", "B4"].map((note) => (
-            <div
+            <button
               key={note}
-              className="cursor bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded flex justify-center items-end"
+              className="bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded flex justify-center items-end"
               onMouseDown={() => playNote(note)}
               onMouseUp={() => pause(note)}
               onMouseLeave={() => pause(note)}
@@ -169,7 +169,7 @@ function AppInner() {
               {note.startsWith("C") && (
                 <span className="text-black">{note}</span>
               )}
-            </div>
+            </button>
           ))}
           {/* black keys */}
           {["C#4", "D#4", "", "F#4", "G#4", "A#4"].map(
