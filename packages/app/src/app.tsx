@@ -8,6 +8,8 @@ import AUDIO_WORKLET_URL from "./audio-worklet/build/index.js?url";
 import WASM_URL from "@hiogawa/demo-wasm/pkg/index_bg.wasm?url";
 import { SINE_PROCESSOR_NAME } from "./audio-worklet/common";
 import { Transition } from "@headlessui/react";
+import { cls, normalizeAudioParamMap } from "./utils/misc";
+import { midiNoteToFrequency, parseMidiNote } from "./utils/conversion";
 
 export function App() {
   return (
@@ -30,7 +32,7 @@ function AppInner() {
   //
   const [audio] = React.useState(() => {
     const audioContext = new AudioContext();
-    const masterGainNode = new GainNode(audioContext, { gain: 0 });
+    const masterGainNode = new GainNode(audioContext, { gain: 1 });
     masterGainNode.connect(audioContext.destination);
     return { audioContext, masterGainNode };
   });
@@ -45,6 +47,29 @@ function AppInner() {
       toast.error("failed to load custom node");
     },
   });
+
+  const customNodeParameters =
+    customNode.value && normalizeAudioParamMap(customNode.value.parameters);
+
+  // TODO: click is too disturbing
+  function playNote(note: string) {
+    if (!customNodeParameters) return;
+    customNodeParameters["gain"].linearRampToValueAtTime(
+      0.1,
+      audio.audioContext.currentTime + 0.5
+    );
+    customNodeParameters["frequency"].value = midiNoteToFrequency(
+      parseMidiNote(note)
+    );
+  }
+
+  function pause() {
+    if (!customNodeParameters) return;
+    customNodeParameters["gain"].linearRampToValueAtTime(
+      0,
+      audio.audioContext.currentTime + 0.5
+    );
+  }
 
   //
   // synchronize AudioContext.state with UI
@@ -66,7 +91,7 @@ function AppInner() {
   React.useEffect(() => {
     if (audio.audioContext.state !== "running") {
       toast(
-        "Web Audio is disabled until first user interaction.\nPlease start it either by pressing a left icon or hitting a space key.",
+        "Web Audio is disabled until first user interaction.\nPlease start it either by pressing a left icon.",
         {
           icon: (
             <button
@@ -83,17 +108,6 @@ function AppInner() {
     }
   }, []);
 
-  // master volume on/off
-  const [isOn, setIsOn] = React.useState(false);
-
-  async function toggle() {
-    audio.masterGainNode.gain.linearRampToValueAtTime(
-      isOn ? 0 : 1,
-      audio.audioContext.currentTime + 0.1
-    );
-    setIsOn(!isOn);
-  }
-
   // keyboard shortcut
   useDocumentEvent("keyup", (e) => {
     if (e.key === " ") {
@@ -104,7 +118,6 @@ function AppInner() {
         audio.audioContext.resume();
         return;
       }
-      toggle();
     }
   });
 
@@ -147,21 +160,40 @@ function AppInner() {
         </a>
       </div>
       <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
-        <button
-          className="btn btn-primary w-full flex justify-center items-center py-0.5"
-          disabled={audioState !== "running" || !customNode.value}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            toggle();
-          }}
-        >
-          {isOn ? (
-            <span className="i-ri-pause-line w-6 h-6"></span>
-          ) : (
-            <span className="i-ri-play-line w-6 h-6"></span>
+        <div className="relative" onMouseLeave={() => pause()}>
+          {/* white keys */}
+          {["C4", "D4", "E4", "F4", "G4", "A4", "B4"].map((note) => (
+            <button
+              key={note}
+              className="bg-white flex-1 w-[48px] h-[200px] mx-[1px]"
+              onMouseDown={() => {
+                playNote(note);
+              }}
+              onMouseUp={() => {
+                pause();
+              }}
+            />
+          ))}
+          {/* black keys */}
+          {["C#4", "D#4", "", "F#4", "G#4", "A#4"].map(
+            (note, i) =>
+              note && (
+                <button
+                  key={note}
+                  className={cls(
+                    `absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px]`,
+                    `translate-x-[${50 * i}px]`
+                  )}
+                  onMouseDown={() => {
+                    playNote(note);
+                  }}
+                  onMouseUp={() => {
+                    pause();
+                  }}
+                />
+              )
           )}
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -235,8 +267,4 @@ function useDocumentEvent<K extends keyof DocumentEventMap>(
       document.removeEventListener(type, handler);
     };
   });
-}
-
-function cls(...values: unknown[]): string {
-  return values.filter(Boolean).join(" ");
 }

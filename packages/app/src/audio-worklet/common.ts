@@ -5,10 +5,10 @@ export const SINE_PROCESSOR_NAME = "custom-sine";
 export const SINE_PARAMETER_DESCRIPTORS = [
   {
     name: "gain",
-    defaultValue: decibelToGain(-10),
-    minValue: decibelToGain(-40),
+    defaultValue: 0,
+    minValue: 0,
     maxValue: decibelToGain(10),
-    automationRate: "k-rate",
+    automationRate: "a-rate",
   },
   {
     name: "frequency",
