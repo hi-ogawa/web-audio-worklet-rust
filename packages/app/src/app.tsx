@@ -59,6 +59,7 @@ function AppInner() {
   }
 
   function pause(note: string) {
+    // TODO: avoid redundant note_off event
     customNode.value?.port.postMessage({
       type: "note_off",
       key: parseMidiNote(note),
