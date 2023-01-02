@@ -2,6 +2,7 @@
   "extends": "@tsconfig/strictest",
   "include": ["src"],
   "compilerOptions": {
+    "noUncheckedIndexedAccess": false,
     "checkJs": false,
     "noEmit": true,
     "module": "esnext",

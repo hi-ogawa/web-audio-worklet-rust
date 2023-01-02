@@ -9,7 +9,10 @@
     "dev-setup": "run-s build:audio-worklet",
     "build": "run-s build:*",
     "build:audio-worklet": "esbuild ./src/audio-worklet/index.ts --bundle --outdir=./src/audio-worklet/build",
-    "build:vite": "vite build"
+    "build:vite": "vite build",
+    "build:vercel": "bash misc/vercel/build.sh",
+    "release": "vercel deploy --prebuilt .",
+    "release-production": "vercel deploy --prebuilt . --prod"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.7",

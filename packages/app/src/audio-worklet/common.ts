@@ -1,24 +1,23 @@
-import { z } from "zod";
+import { decibelToGain } from "../utils/conversion";
 
-export const MAIN_PROCESSOR_NAME = "main";
-export const WRAPPER_PROCESSOR_NAME = "wrapper";
+export const SINE_PROCESSOR_NAME = "custom-sine";
 
-export const Z_WRAPPER_MESSAGE_TYPE = z.enum(["initialize"]);
+export const SINE_PARAMETER_DESCRIPTORS = [
+  {
+    name: "gain",
+    defaultValue: 0,
+    minValue: 0,
+    maxValue: decibelToGain(10),
+    automationRate: "a-rate",
+  },
+  {
+    name: "frequency",
+    defaultValue: 880,
+    minValue: 10,
+    maxValue: 3000,
+    automationRate: "k-rate",
+  },
+] as const satisfies ReadonlyArray<ParameterDescriptor>;
 
-export const Z_WRAPPER_MESSAGE_REQUEST = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal(Z_WRAPPER_MESSAGE_TYPE.enum.initialize),
-    wasmUrl: z.string(),
-  }),
-]);
-
-export const Z_WRAPPER_MESSAGE_RESPONSE = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal(Z_WRAPPER_MESSAGE_TYPE.enum.initialize),
-    success: z.boolean(),
-  }),
-]);
-
-export type WrapperMessageRequest = z.infer<typeof Z_WRAPPER_MESSAGE_REQUEST>;
-
-export type WrapperMessageResponse = z.infer<typeof Z_WRAPPER_MESSAGE_RESPONSE>;
+export type SineParameterName =
+  typeof SINE_PARAMETER_DESCRIPTORS[number]["name"];

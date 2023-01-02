@@ -3,4 +3,5 @@ target
 pkg
 build
 dist
+.vercel
 pnpm-lock.yaml

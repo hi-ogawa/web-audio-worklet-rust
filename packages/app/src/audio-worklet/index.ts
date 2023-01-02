@@ -1,31 +1,40 @@
 import "./polyfill";
-import initWasm, { Sine } from "@hiogawa/demo-wasm";
-import { memoize } from "lodash";
+import { SineGenerator, initSync } from "@hiogawa/demo-wasm";
 import { tinyassert } from "../utils/tinyassert";
 import {
-  MAIN_PROCESSOR_NAME,
-  WrapperMessageResponse,
-  WRAPPER_PROCESSOR_NAME,
-  Z_WRAPPER_MESSAGE_REQUEST,
+  SineParameterName,
+  SINE_PARAMETER_DESCRIPTORS,
+  SINE_PROCESSOR_NAME,
 } from "./common";
 
-const initWasmMemoized = memoize(initWasm);
-let initWasmSuccess = false;
-
-const FREQUENCY = 880;
-
 class SineProcessor extends AudioWorkletProcessor {
-  private sine = new Sine();
+  private sine: SineGenerator;
 
-  constructor() {
-    tinyassert(initWasmSuccess);
-    super();
+  constructor(options: AudioWorkletNodeOptions) {
+    super(options);
+    this.port.onmessage = this.handleMessage;
+
+    // instantiate wasm
+    const { processorOptions } = options;
+    const { bufferSource } = processorOptions;
+    tinyassert(bufferSource instanceof ArrayBuffer);
+    initSync(bufferSource); // TODO: is it too heavy? it might be better to have explicit "postMessage" communication to tell main thread when the processor is really ready.
+
+    this.sine = SineGenerator.new(sampleRate);
+  }
+
+  private handleMessage = (e: MessageEvent) => {
+    console.log(e);
+  };
+
+  static override get parameterDescriptors(): ReadonlyArray<ParameterDescriptor> {
+    return SINE_PARAMETER_DESCRIPTORS;
   }
 
   override process(
     _inputs: Float32Array[][],
     outputs: Float32Array[][],
-    _parameters: Record<string, Float32Array>
+    parameters: Record<SineParameterName, Float32Array>
   ): boolean {
     // TODO: handle more ports/channels
     const output = outputs[0]?.[0];
@@ -33,47 +42,9 @@ class SineProcessor extends AudioWorkletProcessor {
       return true;
     }
 
-    this.sine.process(output, sampleRate, FREQUENCY);
+    this.sine.process(output, parameters.frequency[0], parameters.gain[0]);
     return true;
   }
 }
 
-//
-// wrapper to deal with wasm asynchronous initialization
-//
-class WrapperProcessor extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    this.port.onmessage = this.handleMessage;
-  }
-
-  private handleMessage = async (e: MessageEvent) => {
-    const message = Z_WRAPPER_MESSAGE_REQUEST.parse(e.data);
-    if (message.type === "initialize") {
-      try {
-        await initWasmMemoized(message.wasmUrl);
-        registerProcessor(MAIN_PROCESSOR_NAME, SineProcessor);
-        initWasmSuccess = true;
-        this.port.postMessage({
-          type: "initialize",
-          success: true,
-        } satisfies WrapperMessageResponse);
-      } catch (e) {
-        this.port.postMessage({
-          type: "initialize",
-          success: false,
-        } satisfies WrapperMessageResponse);
-      }
-    }
-  };
-
-  override process(
-    _inputs: Float32Array[][],
-    _outputs: Float32Array[][],
-    _parameters: Record<string, Float32Array>
-  ): boolean {
-    return true;
-  }
-}
-
-registerProcessor(WRAPPER_PROCESSOR_NAME, WrapperProcessor);
+registerProcessor(SINE_PROCESSOR_NAME, SineProcessor);
