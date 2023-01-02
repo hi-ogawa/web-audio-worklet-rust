@@ -7,4 +7,6 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+# a few minor fixes https://github.com/hi-ogawa/OxiSynth/pull/1
+oxisynth = { git = "https://github.com/hi-ogawa/OxiSynth", branch = "chore-realtime-safe" }
 wasm-bindgen = "0.2.83"

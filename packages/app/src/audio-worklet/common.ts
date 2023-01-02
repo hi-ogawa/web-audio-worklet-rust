@@ -1,4 +1,9 @@
+import { z } from "zod";
 import { decibelToGain } from "../utils/conversion";
+
+//
+// SineProcessor
+//
 
 export const SINE_PROCESSOR_NAME = "custom-sine";
 
@@ -21,3 +26,34 @@ export const SINE_PARAMETER_DESCRIPTORS = [
 
 export type SineParameterName =
   typeof SINE_PARAMETER_DESCRIPTORS[number]["name"];
+
+//
+// SoundfontProcessor
+//
+
+export const SOUNDFONT_PROCESSOR_NAME = "custom-soundfont";
+
+export const Z_SOUNDFONT_PROCESSOR_EVENT_TYPE = z.enum([
+  "note_on",
+  "note_off",
+  "set_gain",
+]);
+
+export const Z_SOUNDFONT_PROCESSOR_EVENT = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal(Z_SOUNDFONT_PROCESSOR_EVENT_TYPE.enum.note_on),
+    key: z.number(),
+  }),
+  z.object({
+    type: z.literal(Z_SOUNDFONT_PROCESSOR_EVENT_TYPE.enum.note_off),
+    key: z.number(),
+  }),
+  z.object({
+    type: z.literal(Z_SOUNDFONT_PROCESSOR_EVENT_TYPE.enum.set_gain),
+    gain: z.number(),
+  }),
+]);
+
+export type SoundfontProcessorEvent = z.infer<
+  typeof Z_SOUNDFONT_PROCESSOR_EVENT
+>;
