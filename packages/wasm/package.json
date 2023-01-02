@@ -1,0 +1,17 @@
+{
+  "name": "@hiogawa/demo-wasm",
+  "private": true,
+  "version": "1.0.0-pre.0",
+  "type": "module",
+  "main": "./pkg/index.js",
+  "types": "./pkg/index.d.ts",
+  "files": [
+    "pkg/*"
+  ],
+  "scripts": {
+    "build": "wasm-pack build --target web --out-name index && rm -f pkg/package.json pkg/.gitignore pkg/README.md"
+  },
+  "devDependencies": {
+    "wasm-pack": "^0.10.3"
+  }
+}

@@ -1,0 +1,31 @@
+/* fixed main height */
+html,
+body,
+#root {
+  --at-apply: "h-full";
+}
+
+/* base color */
+body {
+  --at-apply: "bg-[var(--colorBgContainer)] text-[var(--colorText)]";
+}
+
+/* color scheme */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+/* override default border color given by @unocss/reset/tailwind.css */
+*,
+::before,
+::after {
+  --at-apply: "border-color-[var(--colorBorderSecondary)]";
+}
+
+/* reduce flickering when switching theme */
+body {
+  --at-apply: "transition";
+}

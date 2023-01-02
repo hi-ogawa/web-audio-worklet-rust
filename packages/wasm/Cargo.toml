@@ -1,0 +1,10 @@
+[package]
+name = "demo_wasm"
+version = "1.0.0-pre.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.83"

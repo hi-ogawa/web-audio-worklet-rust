@@ -1,0 +1,22 @@
+{
+  "scripts": {
+    "dev": "pnpm -C packages/app dev",
+    "build": "pnpm -C packages/app build",
+    "build-wasm": "pnpm -C packages/wasm build",
+    "release": "false",
+    "release:production": "false",
+    "tsc": "tsc -b packages/app",
+    "lint": "run-s lint:*",
+    "lint-check": "run-s lint-check:*",
+    "lint:prettier": "prettier --write --cache .",
+    "lint-check:prettier": "prettier --check --cache .",
+    "lint:cargo-fmt": "cargo fmt",
+    "lint-check:cargo-fmt": "cargo fmt --all --check"
+  },
+  "devDependencies": {
+    "@tsconfig/strictest": "^1.0.2",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.8.1",
+    "typescript": "^4.9.4"
+  }
+}
