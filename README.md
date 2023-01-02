@@ -12,4 +12,6 @@ pnpm dev
 
 - https://github.com/emscripten-core/emscripten/pull/16449
 - https://github.com/rustwasm/wasm-bindgen/issues/2367
+- https://github.com/rustwasm/wasm-bindgen/pull/3017
 - https://github.com/hi-ogawa/toy-metronome
+- https://github.com/hi-ogawa/nih-plug-examples

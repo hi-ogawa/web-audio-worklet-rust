@@ -6,6 +6,8 @@ type ParameterDescriptor = { name: string } & Pick<
 >;
 
 declare abstract class AudioWorkletProcessor {
+  constructor(options: AudioWorkletNodeOptions);
+
   readonly port: MessagePort;
 
   static abstract get parameterDescriptors(): ParameterDescriptor[];
@@ -26,5 +28,5 @@ declare const sampleRate: number;
 
 declare function registerProcessor(
   name: string,
-  processorCtor: new () => AudioWorkletProcessor
+  processorCtor: new (options: AudioWorkletNodeOptions) => AudioWorkletProcessor
 ): void;

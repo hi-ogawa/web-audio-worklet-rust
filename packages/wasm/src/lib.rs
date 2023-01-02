@@ -3,17 +3,17 @@ use std::f32::consts::TAU;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-pub struct Sine {
+pub struct SineGenerator {
     phase: f32,
 }
 
 #[wasm_bindgen]
-impl Sine {
+impl SineGenerator {
     pub fn new() -> Self {
         Self { phase: 0.0 }
     }
 
-    // TODO: how to pass multiple ports/channels efficiently
+    // TODO: how to pass multiple ports/channels efficiently (probably it has to be pre-determined)
     // https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process
     // https://rustwasm.github.io/docs/wasm-bindgen/reference/types/number-slices.html
     pub fn process(&mut self, out_samples: &mut [f32], sample_rate: f32, frequency: f32) -> bool {

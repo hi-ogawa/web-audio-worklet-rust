@@ -7,12 +7,7 @@ import { useStableRef } from "./utils/use-stable-ref";
 import { useThemeState } from "./utils/use-theme-state";
 import AUDIO_WORKLET_URL from "./audio-worklet/build/index.js?url";
 import WASM_URL from "@hiogawa/demo-wasm/pkg/index_bg.wasm?url";
-import {
-  MAIN_PROCESSOR_NAME,
-  WrapperMessageRequest,
-  WRAPPER_PROCESSOR_NAME,
-  Z_WRAPPER_MESSAGE_RESPONSE,
-} from "./audio-worklet/common";
+import { SINE_PROCESSOR_NAME } from "./audio-worklet/common";
 
 export function App() {
   return (
@@ -45,7 +40,8 @@ function AppInner() {
     onSuccess: (node) => {
       node.connect(audio.masterGainNode);
     },
-    onError: () => {
+    onError: (e) => {
+      console.error(e);
       toast.error("failed to load custom node");
     },
   });
@@ -213,29 +209,13 @@ function useCustomNode({
   return useAsync(async () => {
     try {
       await audioContext.audioWorklet.addModule(AUDIO_WORKLET_URL);
-      const wrapper = new AudioWorkletNode(
-        audioContext,
-        WRAPPER_PROCESSOR_NAME
-      );
-      wrapper.port.onmessage = async (e) => {
-        const message = Z_WRAPPER_MESSAGE_RESPONSE.parse(e.data);
-        if (message.type === "initialize") {
-          if (message.success) {
-            const node = new AudioWorkletNode(
-              audioContext,
-              MAIN_PROCESSOR_NAME
-            );
-            console.log(node);
-          } else {
-          }
-        }
-      };
-      wrapper.port.postMessage({
-        type: "initialize",
-        wasmUrl: WASM_URL,
-      } satisfies WrapperMessageRequest);
-      onSuccessRef.current(wrapper);
-      return wrapper;
+      const res = await fetch(WASM_URL);
+      const bufferSource = await res.arrayBuffer();
+      const node = new AudioWorkletNode(audioContext, SINE_PROCESSOR_NAME, {
+        processorOptions: { bufferSource }, // TODO: zero copy?
+      });
+      onSuccessRef.current(node);
+      return node;
     } catch (e) {
       onErrorRef.current(e);
       throw e;
