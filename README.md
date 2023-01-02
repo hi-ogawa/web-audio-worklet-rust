@@ -20,3 +20,4 @@ pnpm release-production
 - https://github.com/rustwasm/wasm-bindgen/pull/3017
 - https://github.com/hi-ogawa/toy-metronome
 - https://github.com/hi-ogawa/nih-plug-examples
+- https://github.com/PolyMeilex/OxiSynth

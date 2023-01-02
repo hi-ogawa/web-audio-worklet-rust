@@ -51,9 +51,6 @@ function AppInner() {
     },
   });
 
-  // const customNodeParameters =
-  //   customNode.value && normalizeAudioParamMap(customNode.value.parameters);
-
   function playNote(note: string) {
     customNode.value?.port.postMessage({
       type: "note_on",
@@ -157,17 +154,22 @@ function AppInner() {
         </a>
       </div>
       {/* TODO: keyboard shortcut */}
+      {/* TODO: more keys and allow scroll if necessary */}
       <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
-        <div className="relative">
+        <div className="relative flex">
           {/* white keys */}
           {["C4", "D4", "E4", "F4", "G4", "A4", "B4"].map((note) => (
-            <button
+            <div
               key={note}
-              className="bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded"
+              className="cursor bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded flex justify-center items-end"
               onMouseDown={() => playNote(note)}
               onMouseUp={() => pause(note)}
               onMouseLeave={() => pause(note)}
-            />
+            >
+              {note.startsWith("C") && (
+                <span className="text-black">{note}</span>
+              )}
+            </div>
           ))}
           {/* black keys */}
           {["C#4", "D#4", "", "F#4", "G#4", "A#4"].map(
@@ -175,9 +177,7 @@ function AppInner() {
               note && (
                 <button
                   key={note}
-                  className={cls(
-                    `absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded`
-                  )}
+                  className="cursor absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded"
                   style={{ transform: `translateX(${50 * i}px)` }}
                   onMouseDown={() => playNote(note)}
                   onMouseUp={() => pause(note)}
