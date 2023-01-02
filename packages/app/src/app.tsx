@@ -91,7 +91,7 @@ function AppInner() {
   React.useEffect(() => {
     if (audio.audioContext.state !== "running") {
       toast(
-        "Web Audio is disabled until first user interaction.\nPlease start it either by pressing a left icon.",
+        "Web Audio is disabled until first user interaction.\nPlease start it either by pressing a left icon or hitting a space key.",
         {
           icon: (
             <button
