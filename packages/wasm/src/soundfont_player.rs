@@ -11,7 +11,7 @@ pub struct SoundfontPlayer {
 }
 
 // embed 1KB of simple soundfont as default fallback
-const DEFAULT_SOUNDFONT_BYTES: &[u8] = include_bytes!("../misc/sine.sf2");
+const DEFAULT_SOUNDFONT_BYTES: &[u8] = include_bytes!("../misc/sin.sf2");
 
 #[wasm_bindgen]
 impl SoundfontPlayer {
@@ -19,8 +19,8 @@ impl SoundfontPlayer {
         let mut synth = Synth::default();
         synth.set_sample_rate(sample_rate);
 
-        let soundfont =
-            oxisynth::SoundFont::load(&mut Cursor::new(DEFAULT_SOUNDFONT_BYTES)).unwrap();
+        let mut cursor = Cursor::new(DEFAULT_SOUNDFONT_BYTES);
+        let soundfont = oxisynth::SoundFont::load(&mut cursor).unwrap();
         synth.add_font(soundfont, true);
 
         Self { synth }

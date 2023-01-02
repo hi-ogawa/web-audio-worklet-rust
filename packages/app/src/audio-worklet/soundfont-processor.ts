@@ -39,7 +39,7 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
     _parameters: Record<string, Float32Array>
   ): boolean {
     const out_l = outputs[0]?.[0];
-    const out_r = outputs[0]?.[0];
+    const out_r = outputs[0]?.[1];
     if (!out_l || !out_r) {
       return false;
     }

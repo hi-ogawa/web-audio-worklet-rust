@@ -6,10 +6,13 @@ import { useStableRef } from "./utils/use-stable-ref";
 import { useThemeState } from "./utils/use-theme-state";
 import AUDIO_WORKLET_URL from "./audio-worklet/build/index.js?url";
 import WASM_URL from "@hiogawa/demo-wasm/pkg/index_bg.wasm?url";
-import { SINE_PROCESSOR_NAME } from "./audio-worklet/common";
+import {
+  SoundfontProcessorEvent,
+  SOUNDFONT_PROCESSOR_NAME,
+} from "./audio-worklet/common";
 import { Transition } from "@headlessui/react";
-import { cls, normalizeAudioParamMap } from "./utils/misc";
-import { midiNoteToFrequency, parseMidiNote } from "./utils/conversion";
+import { cls } from "./utils/misc";
+import { parseMidiNote } from "./utils/conversion";
 
 export function App() {
   return (
@@ -48,27 +51,21 @@ function AppInner() {
     },
   });
 
-  const customNodeParameters =
-    customNode.value && normalizeAudioParamMap(customNode.value.parameters);
+  // const customNodeParameters =
+  //   customNode.value && normalizeAudioParamMap(customNode.value.parameters);
 
-  // TODO: click is too disturbing
   function playNote(note: string) {
-    if (!customNodeParameters) return;
-    customNodeParameters["gain"].linearRampToValueAtTime(
-      0.5,
-      audio.audioContext.currentTime + 0.2
-    );
-    customNodeParameters["frequency"].value = midiNoteToFrequency(
-      parseMidiNote(note)
-    );
+    customNode.value?.port.postMessage({
+      type: "note_on",
+      key: parseMidiNote(note),
+    } satisfies SoundfontProcessorEvent);
   }
 
-  function pause() {
-    if (!customNodeParameters) return;
-    customNodeParameters["gain"].linearRampToValueAtTime(
-      0,
-      audio.audioContext.currentTime + 0.2
-    );
+  function pause(note: string) {
+    customNode.value?.port.postMessage({
+      type: "note_off",
+      key: parseMidiNote(note),
+    } satisfies SoundfontProcessorEvent);
   }
 
   //
@@ -159,19 +156,17 @@ function AppInner() {
           <span className="i-ri-github-line w-6 h-6"></span>
         </a>
       </div>
+      {/* TODO: keyboard shortcut */}
       <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
-        <div className="relative" onMouseLeave={() => pause()}>
+        <div className="relative">
           {/* white keys */}
           {["C4", "D4", "E4", "F4", "G4", "A4", "B4"].map((note) => (
             <button
               key={note}
               className="bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded"
-              onMouseDown={() => {
-                playNote(note);
-              }}
-              onMouseUp={() => {
-                pause();
-              }}
+              onMouseDown={() => playNote(note)}
+              onMouseUp={() => pause(note)}
+              onMouseLeave={() => pause(note)}
             />
           ))}
           {/* black keys */}
@@ -184,12 +179,9 @@ function AppInner() {
                     `absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded`
                   )}
                   style={{ transform: `translateX(${50 * i}px)` }}
-                  onMouseDown={() => {
-                    playNote(note);
-                  }}
-                  onMouseUp={() => {
-                    pause();
-                  }}
+                  onMouseDown={() => playNote(note)}
+                  onMouseUp={() => pause(note)}
+                  onMouseLeave={() => pause(note)}
                 />
               )
           )}
@@ -240,9 +232,15 @@ function useCustomNode({
       await audioContext.audioWorklet.addModule(AUDIO_WORKLET_URL);
       const res = await fetch(WASM_URL);
       const bufferSource = await res.arrayBuffer();
-      const node = new AudioWorkletNode(audioContext, SINE_PROCESSOR_NAME, {
-        processorOptions: { bufferSource }, // TODO: zero copy?
-      });
+      const node = new AudioWorkletNode(
+        audioContext,
+        SOUNDFONT_PROCESSOR_NAME,
+        {
+          numberOfOutputs: 1,
+          outputChannelCount: [2],
+          processorOptions: { bufferSource }, // TODO: zero copy?
+        }
+      );
       onSuccessRef.current(node);
       return node;
     } catch (e) {

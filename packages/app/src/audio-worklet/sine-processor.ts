@@ -2,6 +2,7 @@ import { SineGenerator, initSync } from "@hiogawa/demo-wasm";
 import { tinyassert } from "../utils/tinyassert";
 import { SineParameterName, SINE_PARAMETER_DESCRIPTORS } from "./common";
 
+// unused
 export class SineProcessor extends AudioWorkletProcessor {
   private sine: SineGenerator;
 

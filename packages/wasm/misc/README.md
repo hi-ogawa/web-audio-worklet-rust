@@ -1,6 +1,6 @@
 # misc
 
 ```sh
-# public domain by HYWT https://musical-artifacts.com/artifacts/2558
-wget https://musical-artifacts.com/artifacts/2558/sine.sf2
+# downloaded from https://github.com/PolyMeilex/OxiSynth/blob/16875cee0dec96c7ba67db2d9263e2766ddc27b1/testdata/sin.sf2
+wget https://github.com/PolyMeilex/OxiSynth/raw/master/testdata/sin.sf2
 ```
