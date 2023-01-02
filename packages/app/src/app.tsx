@@ -156,6 +156,7 @@ function AppInner() {
       </div>
       {/* TODO: keyboard shortcut */}
       {/* TODO: more keys and allow scroll if necessary */}
+      {/* TODO: highlight played notes */}
       <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
         <div className="relative flex">
           {/* white keys */}
