@@ -21,7 +21,6 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
   }
 
   private handleMessage = (e: MessageEvent) => {
-    console.log(e.data); // TODO
     const message = Z_SOUNDFONT_PROCESSOR_EVENT.parse(e.data);
     if (message.type === "note_on") {
       this.soundfontPlayer.note_on(message.key);
