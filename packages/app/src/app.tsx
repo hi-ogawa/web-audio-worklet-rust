@@ -55,8 +55,8 @@ function AppInner() {
   function playNote(note: string) {
     if (!customNodeParameters) return;
     customNodeParameters["gain"].linearRampToValueAtTime(
-      0.1,
-      audio.audioContext.currentTime + 0.5
+      0.5,
+      audio.audioContext.currentTime + 0.2
     );
     customNodeParameters["frequency"].value = midiNoteToFrequency(
       parseMidiNote(note)
@@ -67,7 +67,7 @@ function AppInner() {
     if (!customNodeParameters) return;
     customNodeParameters["gain"].linearRampToValueAtTime(
       0,
-      audio.audioContext.currentTime + 0.5
+      audio.audioContext.currentTime + 0.2
     );
   }
 
@@ -181,9 +181,9 @@ function AppInner() {
                 <button
                   key={note}
                   className={cls(
-                    `absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px]`,
-                    `translate-x-[${50 * i}px]`
+                    `absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px]`
                   )}
+                  style={{ transform: `translateX(${50 * i}px)` }}
                   onMouseDown={() => {
                     playNote(note);
                   }}
