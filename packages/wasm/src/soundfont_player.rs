@@ -26,12 +26,12 @@ impl SoundfontPlayer {
         Self { synth }
     }
 
-    pub fn note_on(&mut self, key: u8) {
+    pub fn note_on(&mut self, key: u8, vel: u8) {
         self.synth
             .send_event(MidiEvent::NoteOn {
                 channel: 0,
                 key,
-                vel: 100,
+                vel,
             })
             .unwrap();
     }

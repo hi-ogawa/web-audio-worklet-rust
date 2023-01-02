@@ -12,7 +12,9 @@ import {
 } from "./audio-worklet/common";
 import { Transition } from "@headlessui/react";
 import { cls } from "./utils/misc";
-import { parseMidiNote } from "./utils/conversion";
+import { parseMidiNote, stringifyMidiNote } from "./utils/conversion";
+import { range } from "lodash";
+import { tinyassert } from "./utils/tinyassert";
 
 export function App() {
   return (
@@ -51,18 +53,18 @@ function AppInner() {
     },
   });
 
-  function playNote(note: string) {
+  function sendNoteOn(key: number) {
     customNode.value?.port.postMessage({
       type: "note_on",
-      key: parseMidiNote(note),
+      key,
     } satisfies SoundfontProcessorEvent);
   }
 
-  function pause(note: string) {
+  function sendNoteOff(key: number) {
     // TODO: avoid redundant note_off event
     customNode.value?.port.postMessage({
       type: "note_off",
-      key: parseMidiNote(note),
+      key,
     } satisfies SoundfontProcessorEvent);
   }
 
@@ -117,7 +119,7 @@ function AppInner() {
   });
 
   return (
-    <div className="h-full w-full flex justify-center items-center relative">
+    <div className="h-full w-full flex flex-col justify-center items-center gap-2 relative">
       <div className="absolute right-3 top-3 flex gap-3 flex items-center">
         <Transition
           appear
@@ -154,44 +156,89 @@ function AppInner() {
           <span className="i-ri-github-line w-6 h-6"></span>
         </a>
       </div>
-      {/* TODO: keyboard shortcut */}
-      {/* TODO: more keys and allow scroll if necessary */}
-      {/* TODO: highlight played notes */}
-      <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
-        <div className="relative flex">
-          {/* white keys */}
-          {["C4", "D4", "E4", "F4", "G4", "A4", "B4"].map((note) => (
-            <button
-              key={note}
-              className="bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded flex justify-center items-end"
-              onMouseDown={() => playNote(note)}
-              onMouseUp={() => pause(note)}
-              onMouseLeave={() => pause(note)}
-            >
-              {note.startsWith("C") && (
-                <span className="text-black">{note}</span>
-              )}
-            </button>
-          ))}
-          {/* black keys */}
-          {["C#4", "D#4", "", "F#4", "G#4", "A#4"].map(
-            (note, i) =>
-              note && (
-                <button
-                  key={note}
-                  className="cursor absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded"
-                  style={{ transform: `translateX(${50 * i}px)` }}
-                  onMouseDown={() => playNote(note)}
-                  onMouseUp={() => pause(note)}
-                  onMouseLeave={() => pause(note)}
-                />
-              )
-          )}
-        </div>
+      <div
+        className="w-full overflow-x-auto"
+        ref={React.useCallback((el: HTMLDivElement | null) => {
+          // scroll to C4 on mount
+          if (el) {
+            const c4 = el.querySelector("button[data-note=C4]");
+            tinyassert(c4 instanceof HTMLElement);
+            console.log(c4.offsetLeft, c4.offsetWidth);
+            el.scrollTo({
+              left: c4.offsetLeft - el.offsetWidth / 2 + c4.offsetWidth / 2,
+              behavior: "auto",
+            });
+          }
+        }, [])}
+      >
+        <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
       </div>
     </div>
   );
 }
+
+//
+// KeyboardComponent
+//
+
+const NOTE_NUM_C1 = parseMidiNote("C1");
+
+// trick is to pretend to have imaginary E# and B# keys
+function getNoteOffsetX(note: number): number {
+  return Math.floor(note / 12) * 14 + (note % 12) + Number(note % 12 >= 5);
+}
+
+function KeyboardComponent({
+  sendNoteOn,
+  sendNoteOff,
+}: {
+  sendNoteOn: (note: number) => void;
+  sendNoteOff: (note: number) => void;
+}) {
+  // TODO: keyboard shortcut
+  // TODO: highlight played notes
+  // TODO: hover animation
+  return (
+    <div className="relative flex">
+      {range(parseMidiNote("C1"), parseMidiNote("E9") + 1)
+        .map((noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const)
+        .map(([noteNum, note]) =>
+          note.includes("#") ? (
+            // black key
+            <button
+              key={note}
+              className="z-1 absolute top-0 bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded"
+              style={{
+                transform: `translateX(${
+                  (50 / 2) *
+                  (getNoteOffsetX(noteNum) - getNoteOffsetX(NOTE_NUM_C1))
+                }px)`,
+              }}
+              onMouseDown={() => sendNoteOn(noteNum)}
+              onMouseUp={() => sendNoteOff(noteNum)}
+              onMouseLeave={() => sendNoteOff(noteNum)}
+            ></button>
+          ) : (
+            // white key
+            <button
+              data-note={note} // scroll to C4 on mount
+              key={note}
+              className="bg-white flex-none w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded inline-flex justify-center items-end"
+              onMouseDown={() => sendNoteOn(noteNum)}
+              onMouseUp={() => sendNoteOff(noteNum)}
+              onMouseLeave={() => sendNoteOff(noteNum)}
+            >
+              {noteNum % 12 === 0 && <span className="text-black">{note}</span>}
+            </button>
+          )
+        )}
+    </div>
+  );
+}
+
+//
+// ThemeSelectButton
+//
 
 function ThemeSelectButton() {
   const [theme, setTheme] = useThemeState();
