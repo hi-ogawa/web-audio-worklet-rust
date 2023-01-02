@@ -17,6 +17,7 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
     initSync(bufferSource);
 
     this.soundfontPlayer = SoundfontPlayer.new(sampleRate);
+    this.soundfontPlayer.set_gain(0.5);
   }
 
   private handleMessage = (e: MessageEvent) => {
