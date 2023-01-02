@@ -165,7 +165,7 @@ function AppInner() {
           {["C4", "D4", "E4", "F4", "G4", "A4", "B4"].map((note) => (
             <button
               key={note}
-              className="bg-white flex-1 w-[48px] h-[200px] mx-[1px]"
+              className="bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded"
               onMouseDown={() => {
                 playNote(note);
               }}
@@ -181,7 +181,7 @@ function AppInner() {
                 <button
                   key={note}
                   className={cls(
-                    `absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px]`
+                    `absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded`
                   )}
                   style={{ transform: `translateX(${50 * i}px)` }}
                   onMouseDown={() => {
