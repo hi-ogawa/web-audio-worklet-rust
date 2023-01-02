@@ -1,4 +1,3 @@
-import { Transition } from "@headlessui/react";
 import React from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useAsync } from "react-use";
@@ -8,6 +7,7 @@ import { useThemeState } from "./utils/use-theme-state";
 import AUDIO_WORKLET_URL from "./audio-worklet/build/index.js?url";
 import WASM_URL from "@hiogawa/demo-wasm/pkg/index_bg.wasm?url";
 import { SINE_PROCESSOR_NAME } from "./audio-worklet/common";
+import { Transition } from "@headlessui/react";
 
 export function App() {
   return (
@@ -66,7 +66,7 @@ function AppInner() {
   React.useEffect(() => {
     if (audio.audioContext.state !== "running") {
       toast(
-        "Web Audio is disabled before user interaction.\nPlease start it either by pressing a left icon or hitting a space key.",
+        "Web Audio is disabled until first user interaction.\nPlease start it either by pressing a left icon or hitting a space key.",
         {
           icon: (
             <button
@@ -110,7 +110,16 @@ function AppInner() {
 
   return (
     <div className="h-full w-full flex justify-center items-center relative">
-      <div className="absolute right-3 top-3 flex gap-3">
+      <div className="absolute right-3 top-3 flex gap-3 flex items-center">
+        <Transition
+          appear
+          show={customNode.loading}
+          className="spinner w-5 h-5 transition duration-1000"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        />
         <button
           className="btn btn-ghost flex items-center"
           onClick={() => {
@@ -137,35 +146,23 @@ function AppInner() {
           <span className="i-ri-github-line w-6 h-6"></span>
         </a>
       </div>
-      {customNode.value && (
-        <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
-          <button
-            className="btn btn-primary w-full flex justify-center items-center py-0.5"
-            disabled={audioState !== "running"}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              toggle();
-            }}
-          >
-            {isOn ? (
-              <span className="i-ri-pause-line w-6 h-6"></span>
-            ) : (
-              <span className="i-ri-play-line w-6 h-6"></span>
-            )}
-          </button>
-        </div>
-      )}
-      <Transition
-        className="absolute inset-0 flex justify-center items-center transition duration-1000 bg-[var(--colorBgElevated)]"
-        show={customNode.loading}
-        enterFrom="opacity-0"
-        enterTo="opacity-100"
-        leaveFrom="opacity-100"
-        leaveTo="opacity-0"
-      >
-        <span className="spinner w-10 h-10 !border-4" />
-      </Transition>
+      <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
+        <button
+          className="btn btn-primary w-full flex justify-center items-center py-0.5"
+          disabled={audioState !== "running" || !customNode.value}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            toggle();
+          }}
+        >
+          {isOn ? (
+            <span className="i-ri-pause-line w-6 h-6"></span>
+          ) : (
+            <span className="i-ri-play-line w-6 h-6"></span>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

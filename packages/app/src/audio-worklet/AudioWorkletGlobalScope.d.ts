@@ -10,7 +10,7 @@ declare abstract class AudioWorkletProcessor {
 
   readonly port: MessagePort;
 
-  static abstract get parameterDescriptors(): ParameterDescriptor[];
+  static abstract get parameterDescriptors(): ReadonlyArray<ParameterDescriptor>;
 
   abstract process(
     // connected-node-index => channel-index => sample index

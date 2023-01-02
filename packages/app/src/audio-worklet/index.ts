@@ -1,9 +1,11 @@
 import "./polyfill";
 import { SineGenerator, initSync } from "@hiogawa/demo-wasm";
 import { tinyassert } from "../utils/tinyassert";
-import { SINE_PROCESSOR_NAME } from "./common";
-
-const FREQUENCY = 880;
+import {
+  SineParameterName,
+  SINE_PARAMETER_DESCRIPTORS,
+  SINE_PROCESSOR_NAME,
+} from "./common";
 
 class SineProcessor extends AudioWorkletProcessor {
   private sine: SineGenerator;
@@ -13,21 +15,26 @@ class SineProcessor extends AudioWorkletProcessor {
     this.port.onmessage = this.handleMessage;
 
     // instantiate wasm
-    const { bufferSource } = options.processorOptions;
+    const { processorOptions } = options;
+    const { bufferSource } = processorOptions;
     tinyassert(bufferSource instanceof ArrayBuffer);
-    initSync(bufferSource); // TODO: how long does it block? it might be better to have explicit "postMessage" communication to tell main thread when the processor is really ready.
+    initSync(bufferSource); // TODO: is it too heavy? it might be better to have explicit "postMessage" communication to tell main thread when the processor is really ready.
 
-    this.sine = SineGenerator.new();
+    this.sine = SineGenerator.new(sampleRate);
   }
 
   private handleMessage = (e: MessageEvent) => {
     console.log(e);
   };
 
+  static override get parameterDescriptors(): ReadonlyArray<ParameterDescriptor> {
+    return SINE_PARAMETER_DESCRIPTORS;
+  }
+
   override process(
     _inputs: Float32Array[][],
     outputs: Float32Array[][],
-    _parameters: Record<string, Float32Array>
+    parameters: Record<SineParameterName, Float32Array>
   ): boolean {
     // TODO: handle more ports/channels
     const output = outputs[0]?.[0];
@@ -35,7 +42,7 @@ class SineProcessor extends AudioWorkletProcessor {
       return true;
     }
 
-    this.sine.process(output, sampleRate, FREQUENCY);
+    this.sine.process(output, parameters.frequency[0], parameters.gain[0]);
     return true;
   }
 }
