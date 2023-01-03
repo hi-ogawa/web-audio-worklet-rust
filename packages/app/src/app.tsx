@@ -160,8 +160,16 @@ function AppInner() {
           </a>
         </div>
       </header>
-      <main className="flex-[1_1_auto] flex items-center">
+      <main className="flex-[1_1_auto] flex items-center relative">
         <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
+        <Transition
+          show={customNode.loading || audioState !== "running"}
+          className="absolute z-10 inset-0 flex justify-center items-center transition duration-500 bg-black/[0.15] dark:bg-black/[0.5]"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        ></Transition>
       </main>
     </div>
   );
