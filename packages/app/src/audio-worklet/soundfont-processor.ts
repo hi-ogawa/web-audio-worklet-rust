@@ -11,6 +11,8 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
 
     // instantiate wasm
     // TODO: pass soundfont data via processorOptions
+    // TODO: we could also pass initial data by `postMessage` which ensures zero-copy
+    // TODO: we could also reuse comlink interface for simpler communication https://github.com/GoogleChromeLabs/comlink
     const { processorOptions } = options;
     const { bufferSource } = processorOptions;
     tinyassert(bufferSource instanceof ArrayBuffer);
@@ -23,7 +25,7 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
   private handleMessage = (e: MessageEvent) => {
     const message = Z_SOUNDFONT_PROCESSOR_EVENT.parse(e.data);
     if (message.type === "note_on") {
-      this.soundfontPlayer.note_on(message.key);
+      this.soundfontPlayer.note_on(message.key, 127);
     }
     if (message.type === "note_off") {
       this.soundfontPlayer.note_off(message.key);

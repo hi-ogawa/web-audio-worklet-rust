@@ -12,7 +12,9 @@ import {
 } from "./audio-worklet/common";
 import { Transition } from "@headlessui/react";
 import { cls } from "./utils/misc";
-import { parseMidiNote } from "./utils/conversion";
+import { parseMidiNote, stringifyMidiNote } from "./utils/conversion";
+import { range } from "lodash";
+import { tinyassert } from "./utils/tinyassert";
 
 export function App() {
   return (
@@ -51,18 +53,18 @@ function AppInner() {
     },
   });
 
-  function playNote(note: string) {
+  function sendNoteOn(key: number) {
     customNode.value?.port.postMessage({
       type: "note_on",
-      key: parseMidiNote(note),
+      key,
     } satisfies SoundfontProcessorEvent);
   }
 
-  function pause(note: string) {
+  function sendNoteOff(key: number) {
     // TODO: avoid redundant note_off event
     customNode.value?.port.postMessage({
       type: "note_off",
-      key: parseMidiNote(note),
+      key,
     } satisfies SoundfontProcessorEvent);
   }
 
@@ -117,81 +119,161 @@ function AppInner() {
   });
 
   return (
-    <div className="h-full w-full flex justify-center items-center relative">
-      <div className="absolute right-3 top-3 flex gap-3 flex items-center">
-        <Transition
-          appear
-          show={customNode.loading}
-          className="spinner w-5 h-5 transition duration-1000"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        />
-        <button
-          className="btn btn-ghost flex items-center"
-          onClick={() => {
-            if (audioState === "suspended") {
-              audio.audioContext.resume();
-            } else if (audioState === "running") {
-              audio.audioContext.suspend();
-            }
-          }}
-        >
-          {audioState === "suspended" && (
-            <span className="i-ri-volume-mute-line w-6 h-6"></span>
-          )}
-          {audioState === "running" && (
-            <span className="i-ri-volume-up-line w-6 h-6"></span>
-          )}
-        </button>
-        <ThemeSelectButton />
-        <a
-          className="flex items-center btn btn-ghost"
-          href="https://github.com/hi-ogawa/web-audio-worklet-rust"
-          target="_blank"
-        >
-          <span className="i-ri-github-line w-6 h-6"></span>
-        </a>
-      </div>
-      {/* TODO: keyboard shortcut */}
-      {/* TODO: more keys and allow scroll if necessary */}
-      {/* TODO: highlight played notes */}
-      <div className="w-full max-w-sm flex flex-col items-center gap-5 px-4">
-        <div className="relative flex">
-          {/* white keys */}
-          {["C4", "D4", "E4", "F4", "G4", "A4", "B4"].map((note) => (
+    <div className="h-full w-full flex flex-col relative">
+      <header className="w-full flex justify-end items-center p-2 px-4 shadow-md shadow-black/[0.05] dark:shadow-black/[0.7]">
+        <h1 className="text-xl">Soundfont Player</h1>
+        <div className="flex-1"></div>
+        <div className="flex gap-3 flex items-center">
+          <Transition
+            appear
+            show={customNode.loading}
+            className="spinner w-5 h-5 transition duration-1000"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          />
+          <button
+            className="btn btn-ghost flex items-center"
+            onClick={() => {
+              if (audioState === "suspended") {
+                audio.audioContext.resume();
+              } else if (audioState === "running") {
+                audio.audioContext.suspend();
+              }
+            }}
+          >
+            {audioState === "suspended" && (
+              <span className="i-ri-volume-mute-line w-6 h-6"></span>
+            )}
+            {audioState === "running" && (
+              <span className="i-ri-volume-up-line w-6 h-6"></span>
+            )}
+          </button>
+          <ThemeSelectButton />
+          <a
+            className="flex items-center btn btn-ghost"
+            href="https://github.com/hi-ogawa/web-audio-worklet-rust"
+            target="_blank"
+          >
+            <span className="i-ri-github-line w-6 h-6"></span>
+          </a>
+        </div>
+      </header>
+      <main className="flex-[1_1_auto] flex items-center">
+        <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
+      </main>
+    </div>
+  );
+}
+
+//
+// KeyboardComponent
+//
+
+const NOTE_NUM_C1 = parseMidiNote("C1");
+
+// trick is to pretend to have imaginary E# and B# keys
+function getNoteOffsetX(note: number): number {
+  return Math.floor(note / 12) * 14 + (note % 12) + Number(note % 12 >= 5);
+}
+
+function isBlackKey(note: number): boolean {
+  return [1, 3, 6, 8, 10].includes(note % 12);
+}
+
+function KeyboardComponent({
+  sendNoteOn,
+  sendNoteOff,
+}: {
+  sendNoteOn: (note: number) => void;
+  sendNoteOff: (note: number) => void;
+}) {
+  // TODO: keyboard shortcut
+  // TODO: highlight on hover/play
+  // TODO: tweak key geometry (width/height)
+
+  // scroll to key C4 on mount
+  const refScrollOnMount = React.useCallback((el: HTMLDivElement | null) => {
+    if (el) {
+      const c4 = el.querySelector("[data-note=C4]");
+      tinyassert(c4 instanceof HTMLElement);
+      el.scrollTo({
+        left: c4.offsetLeft - el.offsetWidth / 2 + c4.offsetWidth / 2,
+        behavior: "auto",
+      });
+    }
+  }, []);
+
+  const isTouchScreen = useMatchMedia({
+    query: "(pointer: coarse)",
+    defaultValue: false,
+  });
+
+  return (
+    <div
+      // use webkit-scrollbar to avoid overlay scrollbar (otherwise, users cannot scroll keyboard on touch screen device)
+      className="w-full overflow-x-scroll scrollbar pb-2 max-h-[200px] h-full"
+      ref={refScrollOnMount}
+    >
+      <div className="relative flex select-none touch-none h-full">
+        {range(parseMidiNote("C1"), parseMidiNote("E9") + 1)
+          .map((noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const)
+          .map(([noteNum, note]) => (
             <button
               key={note}
-              className="bg-white flex-1 w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded flex justify-center items-end"
-              onMouseDown={() => playNote(note)}
-              onMouseUp={() => pause(note)}
-              onMouseLeave={() => pause(note)}
+              data-note={note} // scroll to C4 on mount
+              className={
+                isBlackKey(noteNum)
+                  ? "z-1 absolute top-0 bg-black flex-1 w-[44px] h-[60%] mx-[3px] rounded rounded-t-none"
+                  : "bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
+              }
+              style={
+                isBlackKey(noteNum)
+                  ? {
+                      // prettier-ignore
+                      transform: `translateX(${(50 / 2) * (getNoteOffsetX(noteNum) - getNoteOffsetX(NOTE_NUM_C1))}px)`,
+                    }
+                  : {}
+              }
+              onTouchStart={() => {
+                if (!isTouchScreen) return;
+                sendNoteOn(noteNum);
+              }}
+              onTouchMove={() => {}} // TODO
+              onTouchEnd={() => {
+                if (!isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
+              onTouchCancel={() => {
+                if (!isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
+              onMouseDown={() => {
+                if (isTouchScreen) return;
+                sendNoteOn(noteNum);
+              }}
+              onMouseMove={() => {}} // TODO
+              onMouseUp={() => {
+                if (isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
+              onMouseLeave={() => {
+                if (isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
             >
-              {note.startsWith("C") && (
-                <span className="text-black">{note}</span>
-              )}
+              {noteNum % 12 === 0 && <span className="text-black">{note}</span>}
             </button>
           ))}
-          {/* black keys */}
-          {["C#4", "D#4", "", "F#4", "G#4", "A#4"].map(
-            (note, i) =>
-              note && (
-                <button
-                  key={note}
-                  className="cursor absolute top-0 left-[25px] bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded"
-                  style={{ transform: `translateX(${50 * i}px)` }}
-                  onMouseDown={() => playNote(note)}
-                  onMouseUp={() => pause(note)}
-                  onMouseLeave={() => pause(note)}
-                />
-              )
-          )}
-        </div>
       </div>
     </div>
   );
 }
+
+//
+// ThemeSelectButton
+//
 
 function ThemeSelectButton() {
   const [theme, setTheme] = useThemeState();
@@ -267,4 +349,27 @@ function useDocumentEvent<K extends keyof DocumentEventMap>(
       document.removeEventListener(type, handler);
     };
   });
+}
+
+// https://github.com/hi-ogawa/ameblo-stats/blob/45a076a17c46473bb6ff41a64880a74b4dd0b52c/src/routes/index.page.tsx#L728
+function useMatchMedia({
+  query,
+  defaultValue,
+}: {
+  query: string;
+  defaultValue: boolean;
+}): boolean {
+  const [ok, setOk] = React.useState(defaultValue);
+  React.useEffect(() => {
+    const result = window.matchMedia(query);
+    const handler = (e: { matches: boolean }) => {
+      setOk(e.matches);
+    };
+    handler(result);
+    result.addEventListener("change", handler);
+    return () => {
+      result.addEventListener("change", handler);
+    };
+  }, []);
+  return ok;
 }

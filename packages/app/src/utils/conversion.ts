@@ -21,7 +21,7 @@ export function parseMidiNote(note: string): number {
 
   const octave = Number(note[note.length - 1]);
   tinyassert(Number.isInteger(octave));
-  tinyassert(1 <= octave && octave <= 10);
+  tinyassert(1 <= octave && octave < 10);
 
   return index + (octave + 1) * 12;
 }
