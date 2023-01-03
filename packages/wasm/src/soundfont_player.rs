@@ -133,6 +133,7 @@ pub struct JsSoundfontPlayer {
 
 impl From<&SoundfontPlayer> for JsSoundfontPlayer {
     fn from(o: &SoundfontPlayer) -> Self {
+        let (_, current_bank, current_preset) = o.synth.get_program(DEFAULT_CHANNEL).unwrap();
         Self {
             soundfonts: o
                 .soundfonts
@@ -140,8 +141,8 @@ impl From<&SoundfontPlayer> for JsSoundfontPlayer {
                 .map(|(k, v)| (k.clone(), v.into()))
                 .collect(),
             current_soundfont: o.current_soundfont.clone(),
-            current_bank: 0,
-            current_preset: 0,
+            current_bank,
+            current_preset,
         }
     }
 }

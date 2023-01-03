@@ -348,7 +348,7 @@ function SoundfontSelectComponent({
             getStateQuery.data?.current_preset,
           ].join("-")}
           onChange={(e) => {
-            const preset = presets?.[e.target.selectedIndex];
+            const preset = presets?.[e.target.selectedIndex - 1];
             tinyassert(preset);
             setPresetMutation.mutate([soundfontName, preset[1], preset[2]]);
           }}
