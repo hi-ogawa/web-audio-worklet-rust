@@ -16,32 +16,63 @@ describe("SoundfontPlayer", () => {
     // add_soundfont
     const soundfont = await fs.promises.readFile("misc/sin.sf2");
     soundfontPlayer.add_soundfont("xxx", soundfont);
-    const result = soundfontPlayer.get_soundfonts();
-    expect(result).toMatchInlineSnapshot(`
-      Map {
-        "sin.sf2 (default)" => {
-          "presets": [
-            [
-              "Sine Wave",
-              0,
-              0,
+    expect(soundfontPlayer.get_state()).toMatchInlineSnapshot(`
+      {
+        "current_bank": 0,
+        "current_preset": 0,
+        "current_soundfont": "sin.sf2 (default)",
+        "soundfonts": Map {
+          "sin.sf2 (default)" => {
+            "presets": [
+              [
+                "Sine Wave",
+                0,
+                0,
+              ],
             ],
-          ],
-        },
-        "xxx" => {
-          "presets": [
-            [
-              "Sine Wave",
-              0,
-              0,
+          },
+          "xxx" => {
+            "presets": [
+              [
+                "Sine Wave",
+                0,
+                0,
+              ],
             ],
-          ],
+          },
         },
       }
     `);
 
     // set_preset
     soundfontPlayer.set_preset("xxx", 0, 0);
+    expect(soundfontPlayer.get_state()).toMatchInlineSnapshot(`
+      {
+        "current_bank": 0,
+        "current_preset": 0,
+        "current_soundfont": "xxx",
+        "soundfonts": Map {
+          "sin.sf2 (default)" => {
+            "presets": [
+              [
+                "Sine Wave",
+                0,
+                0,
+              ],
+            ],
+          },
+          "xxx" => {
+            "presets": [
+              [
+                "Sine Wave",
+                0,
+                0,
+              ],
+            ],
+          },
+        },
+      }
+    `);
 
     // process
     let output = [new Float32Array(128), new Float32Array(128)];

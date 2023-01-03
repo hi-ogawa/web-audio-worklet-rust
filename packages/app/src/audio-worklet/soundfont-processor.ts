@@ -1,4 +1,4 @@
-import { initSync, JsSoundfont, SoundfontPlayer } from "@hiogawa/demo-wasm";
+import { initSync, SoundfontPlayer } from "@hiogawa/demo-wasm";
 import { tinyassert } from "../utils/tinyassert";
 import { expose } from "comlink";
 
@@ -17,6 +17,10 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
     soundfontPlayer.set_gain(0.5);
   }
 
+  getState() {
+    return soundfontPlayer.get_state();
+  }
+
   noteOn(key: number) {
     tinyassert(soundfontPlayer);
     soundfontPlayer.note_on(key, 127);
@@ -25,10 +29,6 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
   noteOff(key: number) {
     tinyassert(soundfontPlayer);
     soundfontPlayer.note_off(key);
-  }
-
-  getSoundfonts(): Map<string, JsSoundfont> {
-    return soundfontPlayer.get_soundfonts();
   }
 
   addSoundfont(name: string, data: ArrayBuffer): void {

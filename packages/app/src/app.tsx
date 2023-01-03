@@ -207,9 +207,12 @@ function AppInner() {
               <span className="i-ri-menu-line w-5 h-5"></span>
             </button>
           </div>
+          {/* TOOD: this UI doesn't have to be in drawer unless it is in small screen device */}
+          {/* TODO: maybe use drawer but non-overlay type? */}
           <SoundfontSelectComponent
             processor={soundfontProcessorQuery.data?.processor}
           />
+          <div className="border-t mx-2"></div>
           <div className="flex flex-col gap-2 px-4">
             <span>
               Gain <span className="text-gray-400">= 0.5 dB</span>
@@ -242,7 +245,6 @@ function SoundfontSelectComponent({
 }: {
   processor?: Remote<SoundfontProcessor>;
 }) {
-  // TODO: initialize with currently selected soundfont/preset
   const form = useForm<{ fileList?: FileList; soundfontName: string }>({
     defaultValues: {
       fileList: undefined,
@@ -251,6 +253,7 @@ function SoundfontSelectComponent({
   });
   const formValues = form.watch();
   const file = formValues.fileList?.[0];
+  const soundfontName = formValues.soundfontName;
 
   React.useEffect(() => {
     if (file) {
@@ -258,15 +261,23 @@ function SoundfontSelectComponent({
     }
   }, [file]);
 
-  const getSoundfontsQuery = useQuery({
-    queryKey: ["getSoundfontsQuery"],
+  const getStateQuery = useQuery({
+    queryKey: ["getStateQuery"],
     queryFn: async () => {
       tinyassert(processor);
-      return processor.getSoundfonts();
+      return processor.getState();
+    },
+    onError: () => {
+      toast.error("failed to load state");
     },
     enabled: Boolean(processor),
-    staleTime: Infinity,
   });
+
+  React.useEffect(() => {
+    if (!formValues.soundfontName && getStateQuery.data?.current_soundfont) {
+      form.setValue("soundfontName", getStateQuery.data.current_soundfont);
+    }
+  }, [formValues.soundfontName, getStateQuery.data]);
 
   const addSoundfontMutation = useMutation(
     async (file: File) => {
@@ -277,7 +288,7 @@ function SoundfontSelectComponent({
     },
     {
       onSuccess: () => {
-        getSoundfontsQuery.refetch();
+        getStateQuery.refetch();
       },
       onError: (e) => {
         console.error(e);
@@ -293,7 +304,7 @@ function SoundfontSelectComponent({
     },
     {
       onSuccess: () => {
-        getSoundfontsQuery.refetch();
+        getStateQuery.refetch();
       },
       onError: (e) => {
         console.error(e);
@@ -303,7 +314,8 @@ function SoundfontSelectComponent({
   );
 
   const presets =
-    getSoundfontsQuery.data?.get(formValues.soundfontName)?.presets ?? [];
+    getStateQuery.data &&
+    getStateQuery.data.soundfonts.get(soundfontName)?.presets;
 
   return (
     <>
@@ -317,12 +329,10 @@ function SoundfontSelectComponent({
           </div>
         </div>
         <input className="mb-2" type="file" {...form.register("fileList")} />
-        <select
-          {...form.register("soundfontName")}
-          disabled={!getSoundfontsQuery.isSuccess}
-        >
-          {getSoundfontsQuery.isSuccess &&
-            [...getSoundfontsQuery.data.keys()].map((key) => (
+        <select {...form.register("soundfontName")}>
+          <option value="">-- select --</option>
+          {getStateQuery.isSuccess &&
+            [...getStateQuery.data.soundfonts.keys()].map((key) => (
               <option key={key} value={key}>
                 {key}
               </option>
@@ -332,20 +342,24 @@ function SoundfontSelectComponent({
       <div className="flex flex-col gap-2 px-4">
         <span className="text-lg">Instrument</span>
         <select
-          disabled={!getSoundfontsQuery.isSuccess}
+          value={[
+            getStateQuery.data?.current_soundfont,
+            getStateQuery.data?.current_bank,
+            getStateQuery.data?.current_preset,
+          ].join("-")}
           onChange={(e) => {
-            const preset = presets[Number(e.target.value)];
+            const preset = presets?.[e.target.selectedIndex];
             tinyassert(preset);
-            setPresetMutation.mutate([
-              formValues.soundfontName,
-              preset[1],
-              preset[2],
-            ]);
+            setPresetMutation.mutate([soundfontName, preset[1], preset[2]]);
           }}
         >
-          {presets.map((preset, i) => (
-            <option key={JSON.stringify(preset)} value={i}>
-              ({preset[1]} - {preset[2]}) {preset[0]}
+          <option>-- select --</option>
+          {presets?.map((preset) => (
+            <option
+              key={JSON.stringify(preset)}
+              value={[soundfontName, preset[1], preset[2]].join("-")}
+            >
+              {preset[1]} - {preset[2]}&nbsp;&nbsp;&nbsp;{preset[0]}
             </option>
           ))}
         </select>
