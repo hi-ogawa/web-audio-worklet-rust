@@ -119,44 +119,50 @@ function AppInner() {
   });
 
   return (
-    <div className="h-full w-full flex flex-col justify-center items-center gap-2 relative">
-      <div className="absolute right-3 top-3 flex gap-3 flex items-center">
-        <Transition
-          appear
-          show={customNode.loading}
-          className="spinner w-5 h-5 transition duration-1000"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        />
-        <button
-          className="btn btn-ghost flex items-center"
-          onClick={() => {
-            if (audioState === "suspended") {
-              audio.audioContext.resume();
-            } else if (audioState === "running") {
-              audio.audioContext.suspend();
-            }
-          }}
-        >
-          {audioState === "suspended" && (
-            <span className="i-ri-volume-mute-line w-6 h-6"></span>
-          )}
-          {audioState === "running" && (
-            <span className="i-ri-volume-up-line w-6 h-6"></span>
-          )}
-        </button>
-        <ThemeSelectButton />
-        <a
-          className="flex items-center btn btn-ghost"
-          href="https://github.com/hi-ogawa/web-audio-worklet-rust"
-          target="_blank"
-        >
-          <span className="i-ri-github-line w-6 h-6"></span>
-        </a>
-      </div>
-      <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
+    <div className="h-full w-full flex flex-col relative">
+      <header className="w-full flex justify-end items-center p-2 px-4">
+        <h1 className="text-2xl">Soundfont Player</h1>
+        <div className="flex-1"></div>
+        <div className="flex gap-3 flex items-center">
+          <Transition
+            appear
+            show={customNode.loading}
+            className="spinner w-5 h-5 transition duration-1000"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          />
+          <button
+            className="btn btn-ghost flex items-center"
+            onClick={() => {
+              if (audioState === "suspended") {
+                audio.audioContext.resume();
+              } else if (audioState === "running") {
+                audio.audioContext.suspend();
+              }
+            }}
+          >
+            {audioState === "suspended" && (
+              <span className="i-ri-volume-mute-line w-6 h-6"></span>
+            )}
+            {audioState === "running" && (
+              <span className="i-ri-volume-up-line w-6 h-6"></span>
+            )}
+          </button>
+          <ThemeSelectButton />
+          <a
+            className="flex items-center btn btn-ghost"
+            href="https://github.com/hi-ogawa/web-audio-worklet-rust"
+            target="_blank"
+          >
+            <span className="i-ri-github-line w-6 h-6"></span>
+          </a>
+        </div>
+      </header>
+      <main className="flex-[1_1_auto] flex items-center">
+        <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
+      </main>
     </div>
   );
 }
@@ -207,10 +213,10 @@ function KeyboardComponent({
   return (
     <div
       // use webkit-scrollbar to avoid overlay scrollbar (otherwise, users cannot scroll keyboard on touch screen device)
-      className="w-full overflow-x-scroll scrollbar pb-2"
+      className="w-full overflow-x-scroll scrollbar pb-2 max-h-[200px] h-full"
       ref={refScrollOnMount}
     >
-      <div className="relative flex select-none touch-none">
+      <div className="relative flex select-none touch-none h-full">
         {range(parseMidiNote("C1"), parseMidiNote("E9") + 1)
           .map((noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const)
           .map(([noteNum, note]) => (
@@ -219,8 +225,8 @@ function KeyboardComponent({
               data-note={note} // scroll to C4 on mount
               className={
                 isBlackKey(noteNum)
-                  ? "z-1 absolute top-0 bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded rounded-t-none"
-                  : "bg-white flex-none w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
+                  ? "z-1 absolute top-0 bg-black flex-1 w-[44px] h-[60%] mx-[3px] rounded rounded-t-none"
+                  : "bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
               }
               style={
                 isBlackKey(noteNum)
