@@ -156,23 +156,7 @@ function AppInner() {
           <span className="i-ri-github-line w-6 h-6"></span>
         </a>
       </div>
-      <div
-        className="w-full overflow-x-auto"
-        ref={React.useCallback((el: HTMLDivElement | null) => {
-          // scroll to C4 on mount
-          if (el) {
-            const c4 = el.querySelector("button[data-note=C4]");
-            tinyassert(c4 instanceof HTMLElement);
-            console.log(c4.offsetLeft, c4.offsetWidth);
-            el.scrollTo({
-              left: c4.offsetLeft - el.offsetWidth / 2 + c4.offsetWidth / 2,
-              behavior: "auto",
-            });
-          }
-        }, [])}
-      >
-        <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
-      </div>
+      <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
     </div>
   );
 }
@@ -188,6 +172,10 @@ function getNoteOffsetX(note: number): number {
   return Math.floor(note / 12) * 14 + (note % 12) + Number(note % 12 >= 5);
 }
 
+function isBlackKey(note: number): boolean {
+  return [1, 3, 6, 8, 10].includes(note % 12);
+}
+
 function KeyboardComponent({
   sendNoteOn,
   sendNoteOff,
@@ -196,42 +184,83 @@ function KeyboardComponent({
   sendNoteOff: (note: number) => void;
 }) {
   // TODO: keyboard shortcut
-  // TODO: highlight played notes
-  // TODO: hover animation
+  // TODO: highlight on hover/play
+  // TODO: tweak key geometry (width/height)
+
+  // scroll to key C4 on mount
+  const refScrollOnMount = React.useCallback((el: HTMLDivElement | null) => {
+    if (el) {
+      const c4 = el.querySelector("[data-note=C4]");
+      tinyassert(c4 instanceof HTMLElement);
+      el.scrollTo({
+        left: c4.offsetLeft - el.offsetWidth / 2 + c4.offsetWidth / 2,
+        behavior: "auto",
+      });
+    }
+  }, []);
+
+  const isTouchScreen = useMatchMedia({
+    query: "(pointer: coarse)",
+    defaultValue: false,
+  });
+
   return (
-    <div className="relative flex">
-      {range(parseMidiNote("C1"), parseMidiNote("E9") + 1)
-        .map((noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const)
-        .map(([noteNum, note]) =>
-          note.includes("#") ? (
-            // black key
+    <div
+      // use webkit-scrollbar to avoid overlay scrollbar (otherwise, users cannot scroll keyboard on touch screen device)
+      className="w-full overflow-x-scroll scrollbar pb-2"
+      ref={refScrollOnMount}
+    >
+      <div className="relative flex select-none touch-none">
+        {range(parseMidiNote("C1"), parseMidiNote("E9") + 1)
+          .map((noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const)
+          .map(([noteNum, note]) => (
             <button
               key={note}
-              className="z-1 absolute top-0 bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded"
-              style={{
-                transform: `translateX(${
-                  (50 / 2) *
-                  (getNoteOffsetX(noteNum) - getNoteOffsetX(NOTE_NUM_C1))
-                }px)`,
-              }}
-              onMouseDown={() => sendNoteOn(noteNum)}
-              onMouseUp={() => sendNoteOff(noteNum)}
-              onMouseLeave={() => sendNoteOff(noteNum)}
-            ></button>
-          ) : (
-            // white key
-            <button
               data-note={note} // scroll to C4 on mount
-              key={note}
-              className="bg-white flex-none w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded inline-flex justify-center items-end"
-              onMouseDown={() => sendNoteOn(noteNum)}
-              onMouseUp={() => sendNoteOff(noteNum)}
-              onMouseLeave={() => sendNoteOff(noteNum)}
+              className={
+                isBlackKey(noteNum)
+                  ? "z-1 absolute top-0 bg-black flex-1 w-[44px] h-[120px] mx-[3px] rounded rounded-t-none"
+                  : "bg-white flex-none w-[48px] h-[200px] mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
+              }
+              style={
+                isBlackKey(noteNum)
+                  ? {
+                      // prettier-ignore
+                      transform: `translateX(${(50 / 2) * (getNoteOffsetX(noteNum) - getNoteOffsetX(NOTE_NUM_C1))}px)`,
+                    }
+                  : {}
+              }
+              onTouchStart={() => {
+                if (!isTouchScreen) return;
+                sendNoteOn(noteNum);
+              }}
+              onTouchMove={() => {}} // TODO
+              onTouchEnd={() => {
+                if (!isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
+              onTouchCancel={() => {
+                if (!isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
+              onMouseDown={() => {
+                if (isTouchScreen) return;
+                sendNoteOn(noteNum);
+              }}
+              onMouseMove={() => {}} // TODO
+              onMouseUp={() => {
+                if (isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
+              onMouseLeave={() => {
+                if (isTouchScreen) return;
+                sendNoteOff(noteNum);
+              }}
             >
               {noteNum % 12 === 0 && <span className="text-black">{note}</span>}
             </button>
-          )
-        )}
+          ))}
+      </div>
     </div>
   );
 }
@@ -314,4 +343,27 @@ function useDocumentEvent<K extends keyof DocumentEventMap>(
       document.removeEventListener(type, handler);
     };
   });
+}
+
+// https://github.com/hi-ogawa/ameblo-stats/blob/45a076a17c46473bb6ff41a64880a74b4dd0b52c/src/routes/index.page.tsx#L728
+function useMatchMedia({
+  query,
+  defaultValue,
+}: {
+  query: string;
+  defaultValue: boolean;
+}): boolean {
+  const [ok, setOk] = React.useState(defaultValue);
+  React.useEffect(() => {
+    const result = window.matchMedia(query);
+    const handler = (e: { matches: boolean }) => {
+      setOk(e.matches);
+    };
+    handler(result);
+    result.addEventListener("change", handler);
+    return () => {
+      result.addEventListener("change", handler);
+    };
+  }, []);
+  return ok;
 }
