@@ -26,6 +26,7 @@ importers:
       '@unocss/reset': ^0.48.0
       '@vitejs/plugin-react': ^3.0.0
       antd: ^5.1.2
+      comlink: ^4.3.1
       esbuild: ^0.16.12
       fastestsmallesttextencoderdecoder: ^1.0.22
       lodash: ^4.17.21
@@ -42,6 +43,7 @@ importers:
       '@floating-ui/react-dom-interactions': 0.13.3_ib3m5ricvtkl2cll7qpr2f6lvq
       '@headlessui/react': 1.7.7_biqbaboplfbrettd7655fr4n2y
       '@hiogawa/demo-wasm': link:../wasm
+      comlink: 4.3.1
       fastestsmallesttextencoderdecoder: 1.0.22
       lodash: 4.17.21
       react: 18.2.0
@@ -1263,6 +1265,10 @@ packages:
   /colorette/2.0.19:
     resolution: {integrity: sha512-3tlv/dIP7FWvj3BsbHrGLJ6l/oKh1O3TcgBqMn+yyCagOxc23fyzDS6HypQbgxWbkpDnf52p1LuR4eWDQ/K9WQ==}
     dev: true
+
+  /comlink/4.3.1:
+    resolution: {integrity: sha512-+YbhUdNrpBZggBAHWcgQMLPLH1KDF3wJpeqrCKieWQ8RL7atmgsgTQko1XEBK6PsecfopWNntopJ+ByYG1lRaA==}
+    dev: false
 
   /compute-scroll-into-view/2.0.3:
     resolution: {integrity: sha512-mj/AjC7WqXeVlUB6zUq5Qrivb6et0kyasDQcbCWLDusYUqaXng+BfOnhCdRqPOa5/dWNn5e9+u40H6w2BYRdNQ==}

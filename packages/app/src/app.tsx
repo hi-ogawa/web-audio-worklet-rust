@@ -6,10 +6,7 @@ import { useStableRef } from "./utils/use-stable-ref";
 import { useThemeState } from "./utils/use-theme-state";
 import AUDIO_WORKLET_URL from "./audio-worklet/build/index.js?url";
 import WASM_URL from "@hiogawa/demo-wasm/pkg/index_bg.wasm?url";
-import {
-  SoundfontProcessorEvent,
-  SOUNDFONT_PROCESSOR_NAME,
-} from "./audio-worklet/common";
+import { SOUNDFONT_PROCESSOR_NAME } from "./audio-worklet/common";
 import { Transition } from "@headlessui/react";
 import { cls } from "./utils/misc";
 import { parseMidiNote, stringifyMidiNote } from "./utils/conversion";
@@ -17,6 +14,8 @@ import { range } from "lodash";
 import { tinyassert } from "./utils/tinyassert";
 import { Drawer } from "./components/drawer";
 import { useForm } from "react-hook-form";
+import { wrap, Remote, transfer } from "comlink";
+import type { SoundfontProcessor } from "./audio-worklet/soundfont-processor";
 
 export function App() {
   return (
@@ -44,30 +43,23 @@ function AppInner() {
     return { audioContext, masterGainNode };
   });
 
-  const customNode = useCustomNode({
+  const customNode = useSoundfontProcessor({
     audioContext: audio.audioContext,
-    onSuccess: (node) => {
+    onSuccess: ({ node }) => {
       node.connect(audio.masterGainNode);
     },
     onError: (e) => {
       console.error(e);
-      toast.error("failed to load custom node");
+      toast.error("failed to load AudioWorkletNode");
     },
   });
 
   function sendNoteOn(key: number) {
-    customNode.value?.port.postMessage({
-      type: "note_on",
-      key,
-    } satisfies SoundfontProcessorEvent);
+    customNode.value?.processor.noteOn(key);
   }
 
   function sendNoteOff(key: number) {
-    // TODO: avoid redundant note_off event
-    customNode.value?.port.postMessage({
-      type: "note_off",
-      key,
-    } satisfies SoundfontProcessorEvent);
+    customNode.value?.processor.noteOff(key);
   }
 
   //
@@ -414,13 +406,17 @@ function ThemeSelectButton() {
 // utils
 //
 
-function useCustomNode({
+// TODO: not hmr friendly?
+function useSoundfontProcessor({
   audioContext,
   onSuccess,
   onError,
 }: {
   audioContext: AudioContext;
-  onSuccess: (node: AudioWorkletNode) => void;
+  onSuccess: (value: {
+    node: AudioWorkletNode;
+    processor: Remote<SoundfontProcessor>;
+  }) => void;
   onError: (e: unknown) => void;
 }) {
   const onSuccessRef = useStableRef(onSuccess);
@@ -437,11 +433,12 @@ function useCustomNode({
         {
           numberOfOutputs: 1,
           outputChannelCount: [2],
-          processorOptions: { bufferSource }, // TODO: zero copy?
         }
       );
-      onSuccessRef.current(node);
-      return node;
+      const processor = wrap<SoundfontProcessor>(node.port);
+      await processor.initialize(transfer(bufferSource, [bufferSource]));
+      onSuccessRef.current({ node, processor });
+      return { node, processor };
     } catch (e) {
       onErrorRef.current(e);
       throw e;

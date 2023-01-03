@@ -1,39 +1,31 @@
 import { initSync, SoundfontPlayer } from "@hiogawa/demo-wasm";
 import { tinyassert } from "../utils/tinyassert";
-import { Z_SOUNDFONT_PROCESSOR_EVENT } from "./common";
+import { expose } from "comlink";
+
+let soundfontPlayer: SoundfontPlayer;
 
 export class SoundfontProcessor extends AudioWorkletProcessor {
-  private soundfontPlayer: SoundfontPlayer;
-
   constructor(options: AudioWorkletNodeOptions) {
     super(options);
-    this.port.onmessage = this.handleMessage;
-
-    // instantiate wasm
-    // TODO: pass soundfont data via processorOptions
-    // TODO: we could also pass initial data by `postMessage` which ensures zero-copy
-    // TODO: we could also reuse comlink interface for simpler communication https://github.com/GoogleChromeLabs/comlink
-    const { processorOptions } = options;
-    const { bufferSource } = processorOptions;
-    tinyassert(bufferSource instanceof ArrayBuffer);
-    initSync(bufferSource);
-
-    this.soundfontPlayer = SoundfontPlayer.new(sampleRate);
-    this.soundfontPlayer.set_gain(0.5);
+    expose(this, this.port);
   }
 
-  private handleMessage = (e: MessageEvent) => {
-    const message = Z_SOUNDFONT_PROCESSOR_EVENT.parse(e.data);
-    if (message.type === "note_on") {
-      this.soundfontPlayer.note_on(message.key, 127);
-    }
-    if (message.type === "note_off") {
-      this.soundfontPlayer.note_off(message.key);
-    }
-    if (message.type === "set_gain") {
-      this.soundfontPlayer.set_gain(message.gain);
-    }
-  };
+  initialize(bufferSource: ArrayBuffer) {
+    tinyassert(!soundfontPlayer);
+    initSync(bufferSource);
+    soundfontPlayer = SoundfontPlayer.new(sampleRate);
+    soundfontPlayer.set_gain(0.5);
+  }
+
+  noteOn(key: number) {
+    tinyassert(soundfontPlayer);
+    soundfontPlayer.note_on(key, 127);
+  }
+
+  noteOff(key: number) {
+    tinyassert(soundfontPlayer);
+    soundfontPlayer.note_off(key);
+  }
 
   override process(
     _inputs: Float32Array[][],
@@ -42,10 +34,10 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
   ): boolean {
     const out_l = outputs[0]?.[0];
     const out_r = outputs[0]?.[1];
-    if (!out_l || !out_r) {
+    if (!soundfontPlayer || !out_l || !out_r) {
       return false;
     }
-    this.soundfontPlayer.process(out_l, out_r);
+    soundfontPlayer.process(out_l, out_r);
     return true;
   }
 }
