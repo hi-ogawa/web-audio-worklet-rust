@@ -120,8 +120,8 @@ function AppInner() {
 
   return (
     <div className="h-full w-full flex flex-col relative">
-      <header className="w-full flex justify-end items-center p-2 px-4">
-        <h1 className="text-2xl">Soundfont Player</h1>
+      <header className="w-full flex justify-end items-center p-2 px-4 shadow-md shadow-black/[0.05] dark:shadow-black/[0.7]">
+        <h1 className="text-xl">Soundfont Player</h1>
         <div className="flex-1"></div>
         <div className="flex gap-3 flex items-center">
           <Transition
