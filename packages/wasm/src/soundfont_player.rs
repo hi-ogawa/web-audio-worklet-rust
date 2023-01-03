@@ -53,7 +53,7 @@ impl SoundfontPlayer {
     pub fn note_on(&mut self, key: u8, vel: u8) {
         self.synth
             .send_event(MidiEvent::NoteOn {
-                channel: 0,
+                channel: DEFAULT_CHANNEL,
                 key,
                 vel,
             })
@@ -62,7 +62,10 @@ impl SoundfontPlayer {
 
     pub fn note_off(&mut self, key: u8) {
         self.synth
-            .send_event(MidiEvent::NoteOff { channel: 0, key })
+            .send_event(MidiEvent::NoteOff {
+                channel: DEFAULT_CHANNEL,
+                key,
+            })
             .unwrap();
     }
 
@@ -101,7 +104,12 @@ impl SoundfontPlayer {
         // load soundfont and set preset
         let soundfont_id = self.synth.add_font(soundfont.clone(), true);
         self.synth
-            .program_select(0, soundfont_id, bank_num, preset_num.try_into().unwrap())
+            .program_select(
+                DEFAULT_CHANNEL,
+                soundfont_id,
+                bank_num,
+                preset_num.try_into().unwrap(),
+            )
             .map_err(serde_wasm_bindgen::Error::new)?;
         self.current_soundfont = soundfont_name;
         Ok(())
