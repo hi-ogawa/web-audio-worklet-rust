@@ -160,7 +160,7 @@ function AppInner() {
           </a>
         </div>
       </header>
-      <main className="flex-[1_1_auto] flex items-center relative">
+      <main className="flex-1 flex items-center relative">
         <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
         <Transition
           show={customNode.loading || audioState !== "running"}
@@ -190,6 +190,17 @@ function isBlackKey(note: number): boolean {
   return [1, 3, 6, 8, 10].includes(note % 12);
 }
 
+const KEY_SHORTCUT_MAPPING = new Map<string, number>([
+  // C4..
+  ..."zsxdcvgbhnjm"
+    .split("")
+    .map((key, i) => [key, NOTE_NUM_C1 + 12 * 3 + i] as const),
+  // C5..
+  ..."q2w3er5t6y7ui9o0p"
+    .split("")
+    .map((key, i) => [key, NOTE_NUM_C1 + 12 * 4 + i] as const),
+]);
+
 function KeyboardComponent({
   sendNoteOn,
   sendNoteOff,
@@ -197,7 +208,7 @@ function KeyboardComponent({
   sendNoteOn: (note: number) => void;
   sendNoteOff: (note: number) => void;
 }) {
-  // TODO: keyboard shortcut
+  // TODO: manage note states internally within this component so that it can be used for highlighting UI and avoiding duplicate events.
   // TODO: highlight on hover/play
   // TODO: tweak key geometry (width/height)
 
@@ -212,6 +223,30 @@ function KeyboardComponent({
       });
     }
   }, []);
+
+  // keyboard shortcut
+  useDocumentEvent("keydown", (e) => {
+    if (e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+      return;
+    }
+    const found = KEY_SHORTCUT_MAPPING.get(e.key);
+    if (found) {
+      e.preventDefault();
+      e.stopPropagation();
+      sendNoteOn(found);
+    }
+  });
+  useDocumentEvent("keyup", (e) => {
+    if (e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+      return;
+    }
+    const found = KEY_SHORTCUT_MAPPING.get(e.key);
+    if (found) {
+      e.preventDefault();
+      e.stopPropagation();
+      sendNoteOff(found);
+    }
+  });
 
   const isTouchScreen = useMatchMedia({
     query: "(pointer: coarse)",
