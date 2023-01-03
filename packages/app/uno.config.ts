@@ -25,6 +25,12 @@ export default defineConfig({
       rounded-full
       border-2 border-gray-500 border-t-gray-300 border-l-gray-300
     `,
+    link: `
+      cursor-pointer
+      transition
+      text-[var(--colorPrimary)]
+      hover:text-[var(--colorPrimaryHover)]
+    `,
     btn: `
       cursor-pointer
       transition

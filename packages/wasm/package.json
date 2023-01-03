@@ -9,9 +9,11 @@
     "pkg/*"
   ],
   "scripts": {
-    "build": "wasm-pack build --target web --out-name index && rm -f pkg/package.json pkg/.gitignore pkg/README.md"
+    "build": "wasm-pack build --target web --out-name index && rm -f pkg/package.json pkg/.gitignore pkg/README.md",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "vitest": "^0.26.3",
     "wasm-pack": "^0.10.3"
   }
 }
