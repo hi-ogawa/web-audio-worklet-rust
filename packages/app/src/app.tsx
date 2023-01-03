@@ -16,6 +16,7 @@ import { parseMidiNote, stringifyMidiNote } from "./utils/conversion";
 import { range } from "lodash";
 import { tinyassert } from "./utils/tinyassert";
 import { Drawer } from "./components/drawer";
+import { useForm } from "react-hook-form";
 
 export function App() {
   return (
@@ -170,7 +171,7 @@ function AppInner() {
         </div>
       </header>
       <Drawer open={menuOpen} onClose={() => setMenuOpen(false)}>
-        <div className="flex flex-col py-2 gap-2">
+        <div className="flex flex-col py-2 gap-4">
           <div className="pl-5 py-1">
             <button
               className="btn btn-ghost flex items-center"
@@ -179,19 +180,14 @@ function AppInner() {
               <span className="i-ri-menu-line w-5 h-5"></span>
             </button>
           </div>
-          <div className="flex flex-col gap-4">
-            <a className="pl-7 flex items-center gap-3 btn btn-ghost" href="/">
-              <span className="i-ri-home-4-line w-5 h-5"></span>
-              Home
-            </a>
-            <a
-              className="pl-7 flex items-center gap-3 btn btn-ghost"
-              href="/edit"
-            >
-              <span className="i-ri-edit-2-line w-5 h-5"></span>
-              Edit
-            </a>
-          </div>
+          <SoundfontSelectComponent />
+          {/* TODO */}
+          {/* <div className="flex flex-col gap-2 px-4">
+            <span>
+              Gain <span className="text-gray-400">= 0.5 dB</span>
+            </span>
+            <input type="range" min="-20" max="20" step="0.5" />
+          </div> */}
         </div>
       </Drawer>
       <main className="flex-1 flex items-center relative">
@@ -206,6 +202,48 @@ function AppInner() {
         ></Transition>
       </main>
     </div>
+  );
+}
+
+//
+// SoundfontSelectComponent
+//
+
+function SoundfontSelectComponent() {
+  // TODO: presets, selected preset state
+  const form = useForm<{ fileList?: FileList }>();
+  const formValues = form.watch();
+  const file = formValues.fileList?.[0];
+
+  // add soundfont
+  React.useEffect(() => {
+    if (file) {
+      // TODO: mutation?
+    }
+  }, [file]);
+
+  return (
+    <>
+      <div className="flex flex-col gap-2 px-4">
+        {/* TODO: suggest to use FluidR3_GM.sf2 by default? */}
+        <div className="flex flex-col">
+          <span className="text-lg">Soundfont</span>
+          {/* prettier-ignore */}
+          <div className="text-sm px-2 text-[var(--colorTextSecondary)]">
+            You can find free soundfont files e.g. from <a className="link" href="https://github.com/FluidSynth/fluidsynth/wiki/SoundFont" target="_blank">FluidSynth Wiki</a> and <a className="link" href="https://musical-artifacts.com" target="_blank">musical-artifacts.com</a>.<br/>
+            Example: <a className="link" href="">FluidR3_GM.sf2 (128MB)</a>
+            {/* TODO: can we host by ourselves? */}
+          </div>
+        </div>
+        <input type="file" {...form.register("fileList")} />
+      </div>
+      <div className="flex flex-col gap-2 px-4">
+        <span className="text-lg">Instrument</span>
+        <select>
+          <option>(0 - 0) Sine</option>
+        </select>
+      </div>
+    </>
   );
 }
 

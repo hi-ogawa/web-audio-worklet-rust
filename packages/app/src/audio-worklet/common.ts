@@ -33,10 +33,13 @@ export type SineParameterName =
 
 export const SOUNDFONT_PROCESSOR_NAME = "custom-soundfont";
 
+// TODO: probably we can use comlink to simplify IPC https://github.com/GoogleChromeLabs/comlink
 export const Z_SOUNDFONT_PROCESSOR_EVENT_TYPE = z.enum([
   "note_on",
   "note_off",
   "set_gain",
+  "add_soundfont",
+  "set_preset",
 ]);
 
 export const Z_SOUNDFONT_PROCESSOR_EVENT = z.discriminatedUnion("type", [
@@ -51,6 +54,12 @@ export const Z_SOUNDFONT_PROCESSOR_EVENT = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(Z_SOUNDFONT_PROCESSOR_EVENT_TYPE.enum.set_gain),
     gain: z.number(),
+  }),
+  z.object({
+    type: z.literal(Z_SOUNDFONT_PROCESSOR_EVENT_TYPE.enum.add_soundfont),
+  }),
+  z.object({
+    type: z.literal(Z_SOUNDFONT_PROCESSOR_EVENT_TYPE.enum.set_preset),
   }),
 ]);
 

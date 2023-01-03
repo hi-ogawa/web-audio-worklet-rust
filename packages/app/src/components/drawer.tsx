@@ -42,7 +42,7 @@ export function Drawer(props: {
         <RemoveScroll className="fixed inset-0 overflow-hidden">
           <Transition.Child
             // requires absolute width
-            className="transition duration-300 transform w-[200px] h-full bg-[var(--colorBgContainer)] shadow-lg"
+            className="transition duration-300 transform w-[80%] max-w-[300px] h-full bg-[var(--colorBgContainer)] shadow-lg"
             enterFrom="translate-x-[-100%]"
             enterTo="translate-x-[0]"
             leaveFrom="translate-x-[0]"
