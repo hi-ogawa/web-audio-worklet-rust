@@ -15,6 +15,7 @@
     "release-production": "vercel deploy --prebuilt . --prod"
   },
   "dependencies": {
+    "@floating-ui/react-dom-interactions": "^0.13.3",
     "@headlessui/react": "^1.7.7",
     "@hiogawa/demo-wasm": "workspace:*",
     "fastestsmallesttextencoderdecoder": "^1.0.22",
@@ -22,6 +23,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.0",
+    "react-remove-scroll": "^2.5.5",
     "react-use": "^17.4.0",
     "zod": "^3.20.2"
   },

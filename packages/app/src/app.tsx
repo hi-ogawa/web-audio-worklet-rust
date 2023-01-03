@@ -15,6 +15,7 @@ import { cls } from "./utils/misc";
 import { parseMidiNote, stringifyMidiNote } from "./utils/conversion";
 import { range } from "lodash";
 import { tinyassert } from "./utils/tinyassert";
+import { Drawer } from "./components/drawer";
 
 export function App() {
   return (
@@ -118,9 +119,17 @@ function AppInner() {
     }
   });
 
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
   return (
     <div className="h-full w-full flex flex-col relative">
       <header className="w-full flex justify-end items-center p-2 px-4 shadow-md shadow-black/[0.05] dark:shadow-black/[0.7]">
+        <button
+          className="pl-1 pr-3 py-1 btn btn-ghost flex items-center"
+          onClick={() => setMenuOpen(true)}
+        >
+          <span className="i-ri-menu-line w-5 h-5"></span>
+        </button>
         <h1 className="text-xl">Soundfont Player</h1>
         <div className="flex-1"></div>
         <div className="flex gap-3 flex items-center">
@@ -160,11 +169,36 @@ function AppInner() {
           </a>
         </div>
       </header>
+      <Drawer open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <div className="flex flex-col py-2 gap-2">
+          <div className="pl-5 py-1">
+            <button
+              className="btn btn-ghost flex items-center"
+              onClick={() => setMenuOpen(false)}
+            >
+              <span className="i-ri-menu-line w-5 h-5"></span>
+            </button>
+          </div>
+          <div className="flex flex-col gap-4">
+            <a className="pl-7 flex items-center gap-3 btn btn-ghost" href="/">
+              <span className="i-ri-home-4-line w-5 h-5"></span>
+              Home
+            </a>
+            <a
+              className="pl-7 flex items-center gap-3 btn btn-ghost"
+              href="/edit"
+            >
+              <span className="i-ri-edit-2-line w-5 h-5"></span>
+              Edit
+            </a>
+          </div>
+        </div>
+      </Drawer>
       <main className="flex-1 flex items-center relative">
         <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
         <Transition
           show={customNode.loading || audioState !== "running"}
-          className="absolute z-10 inset-0 flex justify-center items-center transition duration-500 bg-black/[0.15] dark:bg-black/[0.5]"
+          className="absolute inset-0 flex justify-center items-center transition duration-500 bg-black/[0.15] dark:bg-black/[0.5]"
           enterFrom="opacity-0"
           enterTo="opacity-100"
           leaveFrom="opacity-100"
@@ -268,8 +302,8 @@ function KeyboardComponent({
               data-note={note} // scroll to C4 on mount
               className={
                 isBlackKey(noteNum)
-                  ? "z-1 absolute top-0 bg-black flex-1 w-[44px] h-[60%] mx-[3px] rounded rounded-t-none"
-                  : "bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
+                  ? "absolute top-0 bg-black flex-1 w-[44px] h-[60%] mx-[3px] rounded rounded-t-none"
+                  : "-z-1 bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
               }
               style={
                 isBlackKey(noteNum)
