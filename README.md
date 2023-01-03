@@ -7,6 +7,7 @@ simple example of integrating Rust into [`AudioWorkletProcessor`](https://develo
 pnpm i
 pnpm build-wasm
 pnpm dev
+pnpm test
 
 # release
 pnpm build
