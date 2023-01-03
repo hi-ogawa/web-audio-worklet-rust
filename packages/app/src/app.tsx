@@ -226,7 +226,7 @@ function isBlackKey(note: number): boolean {
 
 const KEY_SHORTCUT_MAPPING = new Map<string, number>([
   // C4..
-  ..."zsxdcvgbhnjm"
+  ..."zsxdcvgbhnjm,l."
     .split("")
     .map((key, i) => [key, NOTE_NUM_C1 + 12 * 3 + i] as const),
   // C5..
@@ -293,7 +293,7 @@ function KeyboardComponent({
       className="w-full overflow-x-scroll scrollbar pb-2 max-h-[200px] h-full"
       ref={refScrollOnMount}
     >
-      <div className="relative flex select-none touch-none h-full">
+      <div className="z-0 relative flex select-none touch-none h-full">
         {range(parseMidiNote("C1"), parseMidiNote("E9") + 1)
           .map((noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const)
           .map(([noteNum, note]) => (
@@ -302,8 +302,8 @@ function KeyboardComponent({
               data-note={note} // scroll to C4 on mount
               className={
                 isBlackKey(noteNum)
-                  ? "absolute top-0 bg-black flex-1 w-[44px] h-[60%] mx-[3px] rounded rounded-t-none"
-                  : "-z-1 bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
+                  ? "z-1 absolute top-0 bg-black flex-1 w-[44px] h-[60%] mx-[3px] rounded rounded-t-none"
+                  : "bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
               }
               style={
                 isBlackKey(noteNum)
