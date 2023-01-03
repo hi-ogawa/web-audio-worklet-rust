@@ -212,8 +212,9 @@ function AppInner() {
           <SoundfontSelectComponent
             processor={soundfontProcessorQuery.data?.processor}
           />
-          <div className="border-t mx-2"></div>
-          <div className="flex flex-col gap-2 px-4">
+          {/* TODO: gain control */}
+          <div className="hidden border-t mx-2"></div>
+          <div className="hidden! flex flex-col gap-2 px-4">
             <span>
               Gain <span className="text-gray-400">= 0.5 dB</span>
             </span>
