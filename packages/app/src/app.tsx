@@ -326,7 +326,7 @@ function SoundfontSelectComponent({
           <span className="text-lg">Soundfont</span>
           {/* prettier-ignore */}
           <div className="text-sm px-2 text-[var(--colorTextSecondary)]">
-            You can find free soundfont files e.g. from <a className="link" href="https://github.com/FluidSynth/fluidsynth/wiki/SoundFont" target="_blank">FluidSynth Wiki</a> and <a className="link" href="https://musical-artifacts.com" target="_blank">musical-artifacts.com</a>.<br/>
+            You can find free soundfont files in <a className="link" href="https://github.com/FluidSynth/fluidsynth/wiki/SoundFont" target="_blank">FluidSynth Wiki</a> or <a className="link" href="https://musical-artifacts.com" target="_blank">musical-artifacts.com</a>.<br/>
           </div>
         </div>
         <input className="mb-2" type="file" {...form.register("fileList")} />
