@@ -15,22 +15,33 @@ describe("SoundfontPlayer", () => {
 
     // add_soundfont
     const soundfont = await fs.promises.readFile("misc/sin.sf2");
-    const result = soundfontPlayer.add_soundfont(soundfont);
+    soundfontPlayer.add_soundfont("xxx", soundfont);
+    const result = soundfontPlayer.get_soundfonts();
     expect(result).toMatchInlineSnapshot(`
-      {
-        "index": 0,
-        "presets": [
-          [
-            "Sine Wave",
-            0,
-            0,
+      Map {
+        "sin.sf2 (default)" => {
+          "presets": [
+            [
+              "Sine Wave",
+              0,
+              0,
+            ],
           ],
-        ],
+        },
+        "xxx" => {
+          "presets": [
+            [
+              "Sine Wave",
+              0,
+              0,
+            ],
+          ],
+        },
       }
     `);
 
     // set_preset
-    soundfontPlayer.set_preset(0, 0, 0);
+    soundfontPlayer.set_preset("xxx", 0, 0);
 
     // process
     let output = [new Float32Array(128), new Float32Array(128)];
@@ -56,7 +67,7 @@ describe("SoundfontPlayer", () => {
       // invalid data
       const soundfont = await fs.promises.readFile("misc/README.md");
       expect(() =>
-        soundfontPlayer.add_soundfont(soundfont)
+        soundfontPlayer.add_soundfont("xxx", soundfont)
       ).toThrowErrorMatchingInlineSnapshot(
         '"failed to load soundfont data (oxisynth::SoundFont::load)"'
       );

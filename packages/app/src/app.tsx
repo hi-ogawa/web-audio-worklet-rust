@@ -1,6 +1,5 @@
 import React from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { useAsync } from "react-use";
 import { useAnimationFrameLoop } from "./utils/use-animation-frame-loop";
 import { useStableRef } from "./utils/use-stable-ref";
 import { useThemeState } from "./utils/use-theme-state";
@@ -16,17 +15,47 @@ import { Drawer } from "./components/drawer";
 import { useForm } from "react-hook-form";
 import { wrap, Remote, transfer } from "comlink";
 import type { SoundfontProcessor } from "./audio-worklet/soundfont-processor";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+  useMutation,
+} from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+// TODO: refactor audio context management? it looks too messy to try to deal with all the logic inside UI.
 
 export function App() {
   return (
-    <>
+    <ReactQueryProvider>
       <Toaster
         toastOptions={{
           className: "!bg-[var(--colorBgElevated)] !text-[var(--colorText)]",
         }}
       />
       <AppInner />
-    </>
+    </ReactQueryProvider>
+  );
+}
+
+function ReactQueryProvider(props: React.PropsWithChildren) {
+  const [queryClient] = React.useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            retry: 0,
+          },
+        },
+      })
+  );
+  return (
+    <QueryClientProvider client={queryClient}>
+      {props.children}
+      {import.meta.env.DEV && <ReactQueryDevtools />}
+    </QueryClientProvider>
   );
 }
 
@@ -38,13 +67,17 @@ function AppInner() {
   //
   const [audio] = React.useState(() => {
     const audioContext = new AudioContext();
-    const masterGainNode = new GainNode(audioContext, { gain: 1 });
+    const masterGainNode = new GainNode(audioContext, {
+      gain: 1,
+      channelCount: 2,
+    });
     masterGainNode.connect(audioContext.destination);
     return { audioContext, masterGainNode };
   });
 
-  const customNode = useSoundfontProcessor({
-    audioContext: audio.audioContext,
+  const soundfontProcessorQuery = useQuery({
+    queryKey: ["soundfontProcessorQuery"],
+    queryFn: () => initializeSoundfontProcessor(audio.audioContext),
     onSuccess: ({ node }) => {
       node.connect(audio.masterGainNode);
     },
@@ -52,14 +85,16 @@ function AppInner() {
       console.error(e);
       toast.error("failed to load AudioWorkletNode");
     },
+    staleTime: Infinity,
+    cacheTime: Infinity,
   });
 
   function sendNoteOn(key: number) {
-    customNode.value?.processor.noteOn(key);
+    soundfontProcessorQuery.data?.processor.noteOn(key);
   }
 
   function sendNoteOff(key: number) {
-    customNode.value?.processor.noteOff(key);
+    soundfontProcessorQuery.data?.processor.noteOff(key);
   }
 
   //
@@ -128,7 +163,7 @@ function AppInner() {
         <div className="flex gap-3 flex items-center">
           <Transition
             appear
-            show={customNode.loading}
+            show={soundfontProcessorQuery.isLoading}
             className="spinner w-5 h-5 transition duration-1000"
             enterFrom="opacity-0"
             enterTo="opacity-100"
@@ -172,20 +207,21 @@ function AppInner() {
               <span className="i-ri-menu-line w-5 h-5"></span>
             </button>
           </div>
-          <SoundfontSelectComponent />
-          {/* TODO */}
-          {/* <div className="flex flex-col gap-2 px-4">
+          <SoundfontSelectComponent
+            processor={soundfontProcessorQuery.data?.processor}
+          />
+          <div className="flex flex-col gap-2 px-4">
             <span>
               Gain <span className="text-gray-400">= 0.5 dB</span>
             </span>
-            <input type="range" min="-20" max="20" step="0.5" />
-          </div> */}
+            <input type="range" min="-20" max="10" step="0.5" />
+          </div>
         </div>
       </Drawer>
       <main className="flex-1 flex items-center relative">
         <KeyboardComponent sendNoteOn={sendNoteOn} sendNoteOff={sendNoteOff} />
         <Transition
-          show={customNode.loading || audioState !== "running"}
+          show={soundfontProcessorQuery.isLoading || audioState !== "running"}
           className="absolute inset-0 flex justify-center items-center transition duration-500 bg-black/[0.15] dark:bg-black/[0.5]"
           enterFrom="opacity-0"
           enterTo="opacity-100"
@@ -201,38 +237,117 @@ function AppInner() {
 // SoundfontSelectComponent
 //
 
-function SoundfontSelectComponent() {
-  // TODO: presets, selected preset state
-  const form = useForm<{ fileList?: FileList }>();
+function SoundfontSelectComponent({
+  processor,
+}: {
+  processor?: Remote<SoundfontProcessor>;
+}) {
+  // TODO: initialize with currently selected soundfont/preset
+  const form = useForm<{ fileList?: FileList; soundfontName: string }>({
+    defaultValues: {
+      fileList: undefined,
+      soundfontName: "",
+    },
+  });
   const formValues = form.watch();
   const file = formValues.fileList?.[0];
 
-  // add soundfont
   React.useEffect(() => {
     if (file) {
-      // TODO: mutation?
+      addSoundfontMutation.mutate(file);
     }
   }, [file]);
+
+  const getSoundfontsQuery = useQuery({
+    queryKey: ["getSoundfontsQuery"],
+    queryFn: async () => {
+      tinyassert(processor);
+      return processor.getSoundfonts();
+    },
+    enabled: Boolean(processor),
+    staleTime: Infinity,
+  });
+
+  const addSoundfontMutation = useMutation(
+    async (file: File) => {
+      tinyassert(processor);
+      const name = file.name ?? "(unknown file)";
+      const arrayBuffer = await file.arrayBuffer();
+      await processor.addSoundfont(name, transfer(arrayBuffer, [arrayBuffer]));
+    },
+    {
+      onSuccess: () => {
+        getSoundfontsQuery.refetch();
+      },
+      onError: (e) => {
+        console.error(e);
+        toast.error("failed to load soundfont");
+      },
+    }
+  );
+
+  const setPresetMutation = useMutation(
+    async (args: [name: string, bank: number, preset: number]) => {
+      tinyassert(processor);
+      await processor?.setPreset(...args);
+    },
+    {
+      onSuccess: () => {
+        getSoundfontsQuery.refetch();
+      },
+      onError: (e) => {
+        console.error(e);
+        toast.error("failed to set instrument");
+      },
+    }
+  );
+
+  const presets =
+    getSoundfontsQuery.data?.get(formValues.soundfontName)?.presets ?? [];
 
   return (
     <>
       <div className="flex flex-col gap-2 px-4">
-        {/* TODO: suggest to use FluidR3_GM.sf2 by default? */}
+        {/* TODO: how to suggest to use FluidR3_GM.sf2 by default? */}
         <div className="flex flex-col">
           <span className="text-lg">Soundfont</span>
           {/* prettier-ignore */}
           <div className="text-sm px-2 text-[var(--colorTextSecondary)]">
             You can find free soundfont files e.g. from <a className="link" href="https://github.com/FluidSynth/fluidsynth/wiki/SoundFont" target="_blank">FluidSynth Wiki</a> and <a className="link" href="https://musical-artifacts.com" target="_blank">musical-artifacts.com</a>.<br/>
-            Example: <a className="link" href="">FluidR3_GM.sf2 (128MB)</a>
-            {/* TODO: can we host by ourselves? */}
           </div>
         </div>
-        <input type="file" {...form.register("fileList")} />
+        <input className="mb-2" type="file" {...form.register("fileList")} />
+        <select
+          {...form.register("soundfontName")}
+          disabled={!getSoundfontsQuery.isSuccess}
+        >
+          {getSoundfontsQuery.isSuccess &&
+            [...getSoundfontsQuery.data.keys()].map((key) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ))}
+        </select>
       </div>
       <div className="flex flex-col gap-2 px-4">
         <span className="text-lg">Instrument</span>
-        <select>
-          <option>(0 - 0) Sine</option>
+        <select
+          disabled={!getSoundfontsQuery.isSuccess}
+          onChange={(e) => {
+            const preset = presets[Number(e.target.value)];
+            tinyassert(preset);
+            setPresetMutation.mutate([
+              formValues.soundfontName,
+              preset[1],
+              preset[2],
+            ]);
+          }}
+        >
+          {presets.map((preset, i) => (
+            <option key={JSON.stringify(preset)} value={i}>
+              ({preset[1]} - {preset[2]}) {preset[0]}
+            </option>
+          ))}
         </select>
       </div>
     </>
@@ -406,44 +521,22 @@ function ThemeSelectButton() {
 // utils
 //
 
-// TODO: not hmr friendly?
-function useSoundfontProcessor({
-  audioContext,
-  onSuccess,
-  onError,
-}: {
-  audioContext: AudioContext;
-  onSuccess: (value: {
-    node: AudioWorkletNode;
-    processor: Remote<SoundfontProcessor>;
-  }) => void;
-  onError: (e: unknown) => void;
-}) {
-  const onSuccessRef = useStableRef(onSuccess);
-  const onErrorRef = useStableRef(onError);
-
-  return useAsync(async () => {
-    try {
-      await audioContext.audioWorklet.addModule(AUDIO_WORKLET_URL);
-      const res = await fetch(WASM_URL);
-      const bufferSource = await res.arrayBuffer();
-      const node = new AudioWorkletNode(
-        audioContext,
-        SOUNDFONT_PROCESSOR_NAME,
-        {
-          numberOfOutputs: 1,
-          outputChannelCount: [2],
-        }
-      );
-      const processor = wrap<SoundfontProcessor>(node.port);
-      await processor.initialize(transfer(bufferSource, [bufferSource]));
-      onSuccessRef.current({ node, processor });
-      return { node, processor };
-    } catch (e) {
-      onErrorRef.current(e);
-      throw e;
-    }
+async function initializeSoundfontProcessor(
+  audioContext: AudioContext
+): Promise<{
+  node: AudioWorkletNode;
+  processor: Remote<SoundfontProcessor>;
+}> {
+  await audioContext.audioWorklet.addModule(AUDIO_WORKLET_URL);
+  const res = await fetch(WASM_URL);
+  const bufferSource = await res.arrayBuffer();
+  const node = new AudioWorkletNode(audioContext, SOUNDFONT_PROCESSOR_NAME, {
+    numberOfOutputs: 1,
+    outputChannelCount: [2],
   });
+  const processor = wrap<SoundfontProcessor>(node.port);
+  await processor.initialize(transfer(bufferSource, [bufferSource]));
+  return { node, processor };
 }
 
 function useDocumentEvent<K extends keyof DocumentEventMap>(

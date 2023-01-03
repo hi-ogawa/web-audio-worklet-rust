@@ -2,6 +2,7 @@
   "extends": "@tsconfig/strictest",
   "include": ["src"],
   "compilerOptions": {
+    "exactOptionalPropertyTypes": false,
     "noUncheckedIndexedAccess": false,
     "checkJs": false,
     "noEmit": true,
