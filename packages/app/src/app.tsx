@@ -373,7 +373,15 @@ function SoundfontSelectComponent({
 // KeyboardComponent
 //
 
-const NOTE_NUM_C1 = parseMidiNote("C1");
+const NOTE_NUM_C1: number = parseMidiNote("C1");
+const NOTE_NUM_FIRST: number = parseMidiNote("C1");
+const NOTE_NUM_LAST: number = parseMidiNote("E9");
+
+const NOTE_RANGE: number[] = range(NOTE_NUM_FIRST, NOTE_NUM_LAST + 1);
+
+const NOTE_FORMAT_RANGE: (readonly [number, string])[] = NOTE_RANGE.map(
+  (noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const
+);
 
 // trick is to pretend to have imaginary E# and B# keys
 function getNoteOffsetX(note: number): number {
@@ -395,6 +403,29 @@ const KEY_SHORTCUT_MAPPING = new Map<string, number>([
     .map((key, i) => [key, NOTE_NUM_C1 + 12 * 4 + i] as const),
 ]);
 
+function useNoteStates(args: {
+  onChange: (note: number, state: boolean) => void;
+}) {
+  const states = range(NOTE_NUM_LAST + 1).map(() => React.useState(false));
+
+  function get(note: number): boolean {
+    const [state, _setState] = states[note];
+    return state;
+  }
+
+  function set(note: number, next: boolean): void {
+    const [_state, setState] = states[note];
+    setState((prev) => {
+      if (prev !== next) {
+        args.onChange(note, next);
+      }
+      return next;
+    });
+  }
+
+  return { get, set };
+}
+
 function KeyboardComponent({
   sendNoteOn,
   sendNoteOff,
@@ -402,9 +433,15 @@ function KeyboardComponent({
   sendNoteOn: (note: number) => void;
   sendNoteOff: (note: number) => void;
 }) {
-  // TODO: manage note states internally within this component so that it can be used for highlighting UI and avoiding duplicate events.
-  // TODO: highlight on hover/play
-  // TODO: tweak key geometry (width/height)
+  // TODO: ability to tweak key geometry (width/height)
+
+  // this assumes all notes are off
+  // otherwise we might need to expose current voice/note states from wasm
+  const noteStates = useNoteStates({
+    onChange: (note, state) => {
+      state ? sendNoteOn(note) : sendNoteOff(note);
+    },
+  });
 
   // scroll to key C4 on mount
   const refScrollOnMount = React.useCallback((el: HTMLDivElement | null) => {
@@ -419,26 +456,27 @@ function KeyboardComponent({
   }, []);
 
   // keyboard shortcut
+  // TODO: disable when AudioContext is paused
   useDocumentEvent("keydown", (e) => {
-    if (e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
       return;
     }
     const found = KEY_SHORTCUT_MAPPING.get(e.key);
     if (found) {
       e.preventDefault();
       e.stopPropagation();
-      sendNoteOn(found);
+      noteStates.set(found, true);
     }
   });
   useDocumentEvent("keyup", (e) => {
-    if (e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
       return;
     }
     const found = KEY_SHORTCUT_MAPPING.get(e.key);
     if (found) {
       e.preventDefault();
       e.stopPropagation();
-      sendNoteOff(found);
+      noteStates.set(found, false);
     }
   });
 
@@ -454,55 +492,62 @@ function KeyboardComponent({
       ref={refScrollOnMount}
     >
       <div className="z-0 relative flex select-none touch-none h-full">
-        {range(parseMidiNote("C1"), parseMidiNote("E9") + 1)
-          .map((noteNum) => [noteNum, stringifyMidiNote(noteNum)] as const)
-          .map(([noteNum, note]) => (
-            <button
-              key={note}
-              data-note={note} // scroll to C4 on mount
-              className={
-                isBlackKey(noteNum)
-                  ? "z-1 absolute top-0 bg-black flex-1 w-[44px] h-[60%] mx-[3px] rounded rounded-t-none"
-                  : "bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end"
+        {NOTE_FORMAT_RANGE.map(([noteNum, note]) => (
+          <button
+            key={note}
+            data-note={note} // scroll to C4 on mount
+            className={cls(
+              "transition",
+              isBlackKey(noteNum) &&
+                "z-1 absolute top-0 bg-black flex-1 w-[40px] h-[60%] mx-[3px] rounded rounded-t-none",
+              !isBlackKey(noteNum) &&
+                "bg-white flex-none w-[48px] h-full mx-[1px] border border-gray-400 dark:border-transparent transition rounded rounded-t-none inline-flex justify-center items-end",
+              noteStates.get(noteNum) &&
+                (isBlackKey(noteNum) ? "bg-cyan-500!" : "bg-cyan-300!")
+            )}
+            style={
+              isBlackKey(noteNum)
+                ? {
+                    // prettier-ignore
+                    transform: `translateX(${(50 / 2) * (getNoteOffsetX(noteNum) - getNoteOffsetX(NOTE_RANGE[0]))}px)`,
+                  }
+                : {}
+            }
+            onTouchStart={() => {
+              if (!isTouchScreen) return;
+              noteStates.set(noteNum, true);
+            }}
+            onTouchMove={() => {}} // TODO: play note when touch slides into this key from others
+            onTouchEnd={() => {
+              if (!isTouchScreen) return;
+              noteStates.set(noteNum, false);
+            }}
+            onTouchCancel={() => {
+              if (!isTouchScreen) return;
+              noteStates.set(noteNum, false);
+            }}
+            onMouseDown={() => {
+              if (isTouchScreen) return;
+              noteStates.set(noteNum, true);
+            }}
+            onMouseEnter={(e) => {
+              if (isTouchScreen) return;
+              if (e.buttons === 1) {
+                noteStates.set(noteNum, true);
               }
-              style={
-                isBlackKey(noteNum)
-                  ? {
-                      // prettier-ignore
-                      transform: `translateX(${(50 / 2) * (getNoteOffsetX(noteNum) - getNoteOffsetX(NOTE_NUM_C1))}px)`,
-                    }
-                  : {}
-              }
-              onTouchStart={() => {
-                if (!isTouchScreen) return;
-                sendNoteOn(noteNum);
-              }}
-              onTouchMove={() => {}} // TODO
-              onTouchEnd={() => {
-                if (!isTouchScreen) return;
-                sendNoteOff(noteNum);
-              }}
-              onTouchCancel={() => {
-                if (!isTouchScreen) return;
-                sendNoteOff(noteNum);
-              }}
-              onMouseDown={() => {
-                if (isTouchScreen) return;
-                sendNoteOn(noteNum);
-              }}
-              onMouseMove={() => {}} // TODO
-              onMouseUp={() => {
-                if (isTouchScreen) return;
-                sendNoteOff(noteNum);
-              }}
-              onMouseLeave={() => {
-                if (isTouchScreen) return;
-                sendNoteOff(noteNum);
-              }}
-            >
-              {noteNum % 12 === 0 && <span className="text-black">{note}</span>}
-            </button>
-          ))}
+            }}
+            onMouseUp={() => {
+              if (isTouchScreen) return;
+              noteStates.set(noteNum, false);
+            }}
+            onMouseLeave={() => {
+              if (isTouchScreen) return;
+              noteStates.set(noteNum, false);
+            }}
+          >
+            {noteNum % 12 === 0 && <span className="text-black">{note}</span>}
+          </button>
+        ))}
       </div>
     </div>
   );
