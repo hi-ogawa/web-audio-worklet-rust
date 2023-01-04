@@ -497,6 +497,7 @@ function KeyboardComponent({
             key={note}
             data-note={note} // scroll to C4 on mount
             className={cls(
+              "transition",
               isBlackKey(noteNum) &&
                 "z-1 absolute top-0 bg-black flex-1 w-[40px] h-[60%] mx-[3px] rounded rounded-t-none",
               !isBlackKey(noteNum) &&
