@@ -30,6 +30,7 @@ importers:
       antd: ^5.1.2
       comlink: ^4.3.1
       esbuild: ^0.16.12
+      esbuild-register: ^3.4.2
       fastestsmallesttextencoderdecoder: ^1.0.22
       lodash: ^4.17.21
       react: ^18.2.0
@@ -66,6 +67,7 @@ importers:
       '@vitejs/plugin-react': 3.0.0_vite@4.0.3
       antd: 5.1.2_biqbaboplfbrettd7655fr4n2y
       esbuild: 0.16.12
+      esbuild-register: 3.4.2_esbuild@0.16.12
       unocss: 0.48.0_vite@4.0.3
       vite: 4.0.3
 
@@ -1496,6 +1498,17 @@ packages:
       is-callable: 1.2.7
       is-date-object: 1.0.5
       is-symbol: 1.0.4
+    dev: true
+
+  /esbuild-register/3.4.2_esbuild@0.16.12:
+    resolution: {integrity: sha512-kG/XyTDyz6+YDuyfB9ZoSIOOmgyFCH+xPRtsCa8W85HLRV5Csp+o3jWVbOSHgSLfyLc5DmP+KFDNwty4mEjC+Q==}
+    peerDependencies:
+      esbuild: '>=0.12 <1'
+    dependencies:
+      debug: 4.3.4
+      esbuild: 0.16.12
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /esbuild/0.16.12:
