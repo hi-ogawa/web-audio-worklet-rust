@@ -14,63 +14,63 @@ describe("SoundfontPlayer", () => {
     const soundfontPlayer = SoundfontPlayer.new(48000);
 
     // add_soundfont
-    const soundfont = await fs.promises.readFile("misc/sin.sf2");
-    soundfontPlayer.add_soundfont("xxx", soundfont);
-    expect(soundfontPlayer.get_state()).toMatchInlineSnapshot(`
+    const soundfontData = await fs.promises.readFile("misc/sin.sf2");
+    soundfontPlayer.add_soundfont("test", soundfontData);
+
+    // get_state
+    let state = soundfontPlayer.get_state();
+    expect(state).toMatchInlineSnapshot(`
       {
-        "current_bank": 0,
-        "current_preset": 0,
-        "current_soundfont": "sin.sf2 (default)",
-        "soundfonts": {
-          "sin.sf2 (default)": {
-            "presets": [
-              [
-                "Sine Wave",
-                0,
-                0,
-              ],
-            ],
-          },
-          "xxx": {
-            "presets": [
-              [
-                "Sine Wave",
-                0,
-                0,
-              ],
-            ],
-          },
+        "current_preset": {
+          "bank": 0,
+          "id": "sin.sf2 (default)-Sine Wave-0-0",
+          "name": "Sine Wave",
+          "preset_num": 0,
+          "soundfont_id": "sin.sf2 (default)",
         },
+        "soundfonts": [
+          {
+            "id": "sin.sf2 (default)",
+            "presets": [
+              {
+                "bank": 0,
+                "id": "sin.sf2 (default)-Sine Wave-0-0",
+                "name": "Sine Wave",
+                "preset_num": 0,
+                "soundfont_id": "sin.sf2 (default)",
+              },
+            ],
+          },
+          {
+            "id": "test",
+            "presets": [
+              {
+                "bank": 0,
+                "id": "test-Sine Wave-0-0",
+                "name": "Sine Wave",
+                "preset_num": 0,
+                "soundfont_id": "test",
+              },
+            ],
+          },
+        ],
       }
     `);
 
     // set_preset
-    soundfontPlayer.set_preset("xxx", 0, 0);
-    expect(soundfontPlayer.get_state()).toMatchInlineSnapshot(`
+    soundfontPlayer.set_preset(
+      state.soundfonts[1].id,
+      state.soundfonts[1].presets[0].id
+    );
+
+    // get_state
+    expect(soundfontPlayer.get_state().current_preset).toMatchInlineSnapshot(`
       {
-        "current_bank": 0,
-        "current_preset": 0,
-        "current_soundfont": "xxx",
-        "soundfonts": {
-          "sin.sf2 (default)": {
-            "presets": [
-              [
-                "Sine Wave",
-                0,
-                0,
-              ],
-            ],
-          },
-          "xxx": {
-            "presets": [
-              [
-                "Sine Wave",
-                0,
-                0,
-              ],
-            ],
-          },
-        },
+        "bank": 0,
+        "id": "test-Sine Wave-0-0",
+        "name": "Sine Wave",
+        "preset_num": 0,
+        "soundfont_id": "test",
       }
     `);
 
@@ -98,7 +98,7 @@ describe("SoundfontPlayer", () => {
       // invalid data
       const soundfont = await fs.promises.readFile("misc/README.md");
       expect(() =>
-        soundfontPlayer.add_soundfont("xxx", soundfont)
+        soundfontPlayer.add_soundfont("test", soundfont)
       ).toThrowErrorMatchingInlineSnapshot('"failed to load soundfont data"');
     });
   });

@@ -35,8 +35,8 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
     soundfontPlayer.add_soundfont(name, new Uint8Array(data));
   }
 
-  setPreset(name: string, bank: number, preset: number): void {
-    soundfontPlayer.set_preset(name, bank, preset);
+  setPreset(soundfontId: string, presetId: string): void {
+    soundfontPlayer.set_preset(soundfontId, presetId);
   }
 
   override process(

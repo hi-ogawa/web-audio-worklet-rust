@@ -275,10 +275,11 @@ function SoundfontSelectComponent({
   });
 
   React.useEffect(() => {
-    if (!formValues.soundfontName && getStateQuery.data?.current_soundfont) {
-      form.setValue("soundfontName", getStateQuery.data.current_soundfont);
+    const soundfont_id = getStateQuery.data?.current_preset?.soundfont_id;
+    if (!soundfontName && soundfont_id) {
+      form.setValue("soundfontName", soundfont_id);
     }
-  }, [formValues.soundfontName, getStateQuery.data]);
+  }, [soundfontName, getStateQuery.data]);
 
   const addSoundfontMutation = useMutation(
     async (file: File) => {
@@ -299,7 +300,7 @@ function SoundfontSelectComponent({
   );
 
   const setPresetMutation = useMutation(
-    async (args: [name: string, bank: number, preset: number]) => {
+    async (args: [string, string]) => {
       tinyassert(processor);
       await processor?.setPreset(...args);
     },
@@ -313,9 +314,6 @@ function SoundfontSelectComponent({
       },
     }
   );
-
-  const presets =
-    getStateQuery.data && getStateQuery.data.soundfonts[soundfontName]?.presets;
 
   return (
     <>
@@ -332,9 +330,9 @@ function SoundfontSelectComponent({
         <select {...form.register("soundfontName")}>
           <option value="">-- select --</option>
           {getStateQuery.isSuccess &&
-            Object.keys(getStateQuery.data.soundfonts).map((key) => (
-              <option key={key} value={key}>
-                {key}
+            getStateQuery.data.soundfonts.map((soundfont) => (
+              <option key={soundfont.id} value={soundfont.id}>
+                {soundfont.id}
               </option>
             ))}
         </select>
@@ -342,26 +340,20 @@ function SoundfontSelectComponent({
       <div className="flex flex-col gap-2 px-4">
         <span className="text-lg">Instrument</span>
         <select
-          value={[
-            getStateQuery.data?.current_soundfont,
-            getStateQuery.data?.current_bank,
-            getStateQuery.data?.current_preset,
-          ].join("-")}
+          value={getStateQuery.data?.current_preset?.id ?? ""}
           onChange={(e) => {
-            const preset = presets?.[e.target.selectedIndex - 1];
-            tinyassert(preset);
-            setPresetMutation.mutate([soundfontName, preset[1], preset[2]]);
+            setPresetMutation.mutate([soundfontName, e.target.value]);
           }}
         >
           <option>-- select --</option>
-          {presets?.map((preset) => (
-            <option
-              key={JSON.stringify(preset)}
-              value={[soundfontName, preset[1], preset[2]].join("-")}
-            >
-              {preset[1]} - {preset[2]}&nbsp;&nbsp;&nbsp;{preset[0]}
-            </option>
-          ))}
+          {getStateQuery.data?.soundfonts
+            .find((f) => f.id === soundfontName)
+            ?.presets.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.bank} - {preset.preset_num}&nbsp;&nbsp;&nbsp;
+                {preset.name}
+              </option>
+            ))}
         </select>
       </div>
     </>
