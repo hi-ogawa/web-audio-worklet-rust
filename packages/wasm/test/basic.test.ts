@@ -100,7 +100,7 @@ describe("SoundfontPlayer", () => {
       expect(() =>
         soundfontPlayer.add_soundfont("xxx", soundfont)
       ).toThrowErrorMatchingInlineSnapshot(
-        '"failed to load soundfont data (oxisynth::SoundFont::load)"'
+        '"failed to load soundfont data"'
       );
     });
   });
