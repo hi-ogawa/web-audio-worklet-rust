@@ -9,10 +9,17 @@
     "pkg/*"
   ],
   "scripts": {
-    "build": "wasm-pack build --target web --out-name index && rm -f pkg/package.json pkg/.gitignore pkg/README.md",
+    "build": "run-s build:*",
+    "build:wasm": "wasm-pack build --target web --out-name index",
+    "build:types": "run-s export-json-schema json-schema-to-ts",
+    "build:fix-pkg": "rm -f pkg/package.json pkg/.gitignore pkg/README.md",
+    "// sed trick https://stackoverflow.com/a/55220428": "",
+    "export-json-schema": "wasm-pack test --node -F export_json_schema | sed '0,/__JSON_SCHEMA_START__/d;/__JSON_SCHEMA_END__/Q' > pkg/types.schema.json",
+    "json-schema-to-ts": "json2ts pkg/types.schema.json > pkg/types.ts",
     "test": "vitest run"
   },
   "devDependencies": {
+    "json-schema-to-typescript": "^11.0.2",
     "vitest": "^0.26.3",
     "wasm-pack": "^0.10.3"
   }

@@ -21,8 +21,8 @@ describe("SoundfontPlayer", () => {
         "current_bank": 0,
         "current_preset": 0,
         "current_soundfont": "sin.sf2 (default)",
-        "soundfonts": Map {
-          "sin.sf2 (default)" => {
+        "soundfonts": {
+          "sin.sf2 (default)": {
             "presets": [
               [
                 "Sine Wave",
@@ -31,7 +31,7 @@ describe("SoundfontPlayer", () => {
               ],
             ],
           },
-          "xxx" => {
+          "xxx": {
             "presets": [
               [
                 "Sine Wave",
@@ -51,8 +51,8 @@ describe("SoundfontPlayer", () => {
         "current_bank": 0,
         "current_preset": 0,
         "current_soundfont": "xxx",
-        "soundfonts": Map {
-          "sin.sf2 (default)" => {
+        "soundfonts": {
+          "sin.sf2 (default)": {
             "presets": [
               [
                 "Sine Wave",
@@ -61,7 +61,7 @@ describe("SoundfontPlayer", () => {
               ],
             ],
           },
-          "xxx" => {
+          "xxx": {
             "presets": [
               [
                 "Sine Wave",

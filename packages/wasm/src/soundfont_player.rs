@@ -1,9 +1,9 @@
 use std::{collections::HashMap, io::Cursor};
 
 use oxisynth::{MidiEvent, Preset, SoundFont, Synth};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-
-// https://github.com/hi-ogawa/nih-plug-examples/blob/5fc76d775a025f690b31d58cec74ab242b02556b/examples/soundfont_player/src/lib.rs
 
 #[wasm_bindgen]
 pub struct SoundfontPlayer {
@@ -15,7 +15,6 @@ pub struct SoundfontPlayer {
 
 // embed 1KB of simple soundfont as default fallback
 const DEFAULT_SOUNDFONT_BYTES: &[u8] = include_bytes!("../misc/sin.sf2");
-
 const DEFAULT_SOUNDFONT_NAME: &str = "sin.sf2 (default)";
 
 // use only single channel
@@ -45,9 +44,11 @@ impl SoundfontPlayer {
         }
     }
 
-    pub fn get_state(&self) -> Result<JsSoundfontPlayerDts, JsValue> {
+    pub fn get_state(&self) -> Result<JsSoundfontPlayerDts, JsError> {
         let result: JsSoundfontPlayer = self.into();
-        Ok(serde_wasm_bindgen::to_value(&result)?.into())
+        Ok(result
+            .serialize(&serde_wasm_bindgen::Serializer::json_compatible())?
+            .into())
     }
 
     pub fn note_on(&mut self, key: u8, vel: u8) {
@@ -73,14 +74,11 @@ impl SoundfontPlayer {
         self.synth.set_gain(gain);
     }
 
-    pub fn add_soundfont(&mut self, name: String, data: &[u8]) -> Result<(), JsValue> {
+    pub fn add_soundfont(&mut self, name: String, data: &[u8]) -> Result<(), JsError> {
         // parse soundfont
         let mut cursor = Cursor::new(data);
-        let soundfont = SoundFont::load(&mut cursor).map_err(|_| {
-            serde_wasm_bindgen::Error::new(
-                "failed to load soundfont data (oxisynth::SoundFont::load)",
-            )
-        })?;
+        let soundfont = SoundFont::load(&mut cursor)
+            .map_err(|_| JsError::new("failed to load soundfont data"))?;
 
         // add soundfont
         self.soundfonts.insert(name, soundfont);
@@ -92,25 +90,23 @@ impl SoundfontPlayer {
         soundfont_name: String,
         bank_num: u32,
         preset_num: u8,
-    ) -> Result<(), JsValue> {
-        let soundfont = self.soundfonts.get(&soundfont_name).map_or_else(
-            || Err(serde_wasm_bindgen::Error::new("invalid soundfont name")),
-            Ok,
-        )?;
+    ) -> Result<(), JsError> {
+        let soundfont = self
+            .soundfonts
+            .get(&soundfont_name)
+            .map_or_else(|| Err(JsError::new("invalid soundfont name")), Ok)?;
 
         // remove current font
         self.synth.font_bank_mut().reset();
 
         // load soundfont and set preset
         let soundfont_id = self.synth.add_font(soundfont.clone(), true);
-        self.synth
-            .program_select(
-                DEFAULT_CHANNEL,
-                soundfont_id,
-                bank_num,
-                preset_num.try_into().unwrap(),
-            )
-            .map_err(serde_wasm_bindgen::Error::new)?;
+        self.synth.program_select(
+            DEFAULT_CHANNEL,
+            soundfont_id,
+            bank_num,
+            preset_num.try_into().unwrap(),
+        )?;
         self.current_soundfont = soundfont_name;
         Ok(())
     }
@@ -131,7 +127,8 @@ impl SoundfontPlayer {
 //   https://rustwasm.github.io/wasm-bindgen/reference/attributes/on-rust-exports/typescript_type.html
 //   https://github.com/rustwasm/wasm-bindgen/issues/111
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct JsSoundfontPlayer {
     soundfonts: HashMap<String, JsSoundfont>,
     current_soundfont: String,
@@ -155,7 +152,8 @@ impl From<&SoundfontPlayer> for JsSoundfontPlayer {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct JsSoundfont {
     pub presets: Vec<JsPreset>,
 }
@@ -178,7 +176,8 @@ impl From<&SoundFont> for JsSoundfont {
 type JsPreset = (String, u32, u32);
 
 // TODO: replace JsPreset with JsPresetV2
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct JsPresetV2 {
     pub id: String,
     pub name: String,
@@ -209,18 +208,29 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TYPESCRIPT_EXTRA: &'static str = r#"
-/* TYPESCRIPT_EXTRA (START) */
+/* __TYPESCRIPT_EXTRA__START__ */
 
-export interface JsSoundfontPlayer {
-    soundfonts: Map<string, JsSoundfont>,
-    current_soundfont: string,
-    current_bank: number,
-    current_preset: number,
-}
+import { JsSoundfontPlayer, JsSoundfont } from "./types";
+export { JsSoundfontPlayer, JsSoundfont }
 
-export interface JsSoundfont {
-    presets: [name: string, bank: number, preset: number][];
-}
-
-/* TYPESCRIPT_EXTRA (END) */
+/* __TYPESCRIPT_EXTRA__END__ */
 "#;
+
+#[cfg(test)]
+pub mod tests {
+    use super::JsSoundfontPlayer;
+    use schemars::schema_for;
+    use wasm_bindgen_test::*;
+    use web_sys::console;
+
+    #[wasm_bindgen_test]
+    fn export_json_schema() {
+        let schema = schema_for!(JsSoundfontPlayer);
+        let schema_str = serde_json::to_string_pretty(&schema).unwrap();
+        if cfg!(feature = "export_json_schema") {
+            console::log_1(&"__JSON_SCHEMA_START__".into());
+            console::log_1(&schema_str.into());
+            console::log_1(&"__JSON_SCHEMA_END__".into());
+        }
+    }
+}

@@ -315,8 +315,7 @@ function SoundfontSelectComponent({
   );
 
   const presets =
-    getStateQuery.data &&
-    getStateQuery.data.soundfonts.get(soundfontName)?.presets;
+    getStateQuery.data && getStateQuery.data.soundfonts[soundfontName]?.presets;
 
   return (
     <>
@@ -333,7 +332,7 @@ function SoundfontSelectComponent({
         <select {...form.register("soundfontName")}>
           <option value="">-- select --</option>
           {getStateQuery.isSuccess &&
-            [...getStateQuery.data.soundfonts.keys()].map((key) => (
+            Object.keys(getStateQuery.data.soundfonts).map((key) => (
               <option key={key} value={key}>
                 {key}
               </option>
