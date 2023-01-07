@@ -15,7 +15,7 @@
     "build:fix-pkg": "rm -f pkg/package.json pkg/.gitignore pkg/README.md",
     "// sed trick from https://stackoverflow.com/a/55220428": "",
     "export-json-schema": "wasm-pack test --node -F export_json_schema | sed '0,/__JSON_SCHEMA_START__/d;/__JSON_SCHEMA_END__/Q' > pkg/types.schema.json",
-    "json-schema-to-ts": "json2ts pkg/types.schema.json > pkg/types.ts",
+    "json-schema-to-ts": "json2ts --no-additionalProperties pkg/types.schema.json > pkg/types.ts",
     "test": "vitest run"
   },
   "devDependencies": {
