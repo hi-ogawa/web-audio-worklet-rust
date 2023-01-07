@@ -350,16 +350,20 @@ function SoundfontSelectComponent({
           onChange={(e) => {
             const preset = presets?.[e.target.selectedIndex - 1];
             tinyassert(preset);
-            setPresetMutation.mutate([soundfontName, preset[1], preset[2]]);
+            setPresetMutation.mutate([
+              soundfontName,
+              preset.bank,
+              preset.preset,
+            ]);
           }}
         >
           <option>-- select --</option>
           {presets?.map((preset) => (
             <option
-              key={JSON.stringify(preset)}
-              value={[soundfontName, preset[1], preset[2]].join("-")}
+              key={preset.id}
+              value={[soundfontName, preset.bank, preset.preset].join("-")}
             >
-              {preset[1]} - {preset[2]}&nbsp;&nbsp;&nbsp;{preset[0]}
+              {preset.bank} - {preset.preset}&nbsp;&nbsp;&nbsp;{preset.name}
             </option>
           ))}
         </select>

@@ -2,7 +2,7 @@ use std::{collections::HashMap, io::Cursor};
 
 use oxisynth::{MidiEvent, Preset, SoundFont, Synth};
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -11,6 +11,7 @@ pub struct SoundfontPlayer {
     // routines for adding/removing soundfont is messy, so manage states by ourselves
     soundfonts: HashMap<String, SoundFont>,
     current_soundfont: String,
+    current_preset_id: String, // TODO
 }
 
 // embed 1KB of simple soundfont as default fallback
@@ -36,11 +37,13 @@ impl SoundfontPlayer {
         let mut soundfonts = HashMap::new();
         soundfonts.insert(DEFAULT_SOUNDFONT_NAME.to_string(), soundfont);
         let current_soundfont = DEFAULT_SOUNDFONT_NAME.to_string();
+        let current_preset_id = "".to_string();
 
         Self {
             synth,
             soundfonts,
             current_soundfont,
+            current_preset_id,
         }
     }
 
@@ -127,11 +130,12 @@ impl SoundfontPlayer {
 //   https://rustwasm.github.io/wasm-bindgen/reference/attributes/on-rust-exports/typescript_type.html
 //   https://github.com/rustwasm/wasm-bindgen/issues/111
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct JsSoundfontPlayer {
     soundfonts: HashMap<String, JsSoundfont>,
     current_soundfont: String,
+    current_preset_id: String,
     current_bank: u32,
     current_preset: u32,
 }
@@ -146,13 +150,14 @@ impl From<&SoundfontPlayer> for JsSoundfontPlayer {
                 .map(|(k, v)| (k.clone(), v.into()))
                 .collect(),
             current_soundfont: o.current_soundfont.clone(),
+            current_preset_id: o.current_preset_id.clone(),
             current_bank,
             current_preset,
         }
     }
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct JsSoundfont {
     pub presets: Vec<JsPreset>,
@@ -161,31 +166,21 @@ pub struct JsSoundfont {
 impl From<&SoundFont> for JsSoundfont {
     fn from(o: &SoundFont) -> Self {
         Self {
-            presets: o
-                .presets
-                .iter()
-                .map(|p| {
-                    let p: JsPresetV2 = p.as_ref().into();
-                    (p.name, p.bank, p.preset)
-                })
-                .collect(),
+            presets: o.presets.iter().map(|p| p.as_ref().into()).collect(),
         }
     }
 }
 
-type JsPreset = (String, u32, u32);
-
-// TODO: replace JsPreset with JsPresetV2
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct JsPresetV2 {
+pub struct JsPreset {
     pub id: String,
     pub name: String,
     pub bank: u32,
     pub preset: u32,
 }
 
-impl From<&Preset> for JsPresetV2 {
+impl From<&Preset> for JsPreset {
     fn from(o: &Preset) -> Self {
         let name = o.name().to_string();
         let bank = o.banknum();
