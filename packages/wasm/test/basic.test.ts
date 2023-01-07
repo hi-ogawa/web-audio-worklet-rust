@@ -99,9 +99,7 @@ describe("SoundfontPlayer", () => {
       const soundfont = await fs.promises.readFile("misc/README.md");
       expect(() =>
         soundfontPlayer.add_soundfont("xxx", soundfont)
-      ).toThrowErrorMatchingInlineSnapshot(
-        '"failed to load soundfont data"'
-      );
+      ).toThrowErrorMatchingInlineSnapshot('"failed to load soundfont data"');
     });
   });
 });
