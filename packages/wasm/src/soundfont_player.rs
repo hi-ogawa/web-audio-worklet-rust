@@ -76,21 +76,12 @@ const DEFAULT_CHANNEL: u8 = 0;
 #[wasm_bindgen]
 impl SoundfontPlayer {
     pub fn new(sample_rate: f32) -> Result<SoundfontPlayer, JsError> {
-        let mut synth = Synth::default();
-        synth.set_sample_rate(sample_rate);
-
-        let mut cursor = Cursor::new(DEFAULT_SOUNDFONT_BYTES);
-        let soundfont = SoundFont::load(&mut cursor).unwrap();
-        let soundfont_id = synth.add_font(soundfont.clone(), true);
-        synth
-            .program_select(DEFAULT_CHANNEL, soundfont_id, 0, 0)
-            .unwrap();
-
         let mut result = Self {
-            synth,
+            synth: Synth::default(),
             soundfonts: vec![],
             current_preset: None,
         };
+        result.synth.set_sample_rate(sample_rate);
         result.add_soundfont(DEFAULT_SOUNDFONT_NAME, DEFAULT_SOUNDFONT_BYTES)?;
         result.set_preset(
             &result.soundfonts[0].id.clone(),
