@@ -6,9 +6,13 @@ use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+#[derive(Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct SoundfontPlayer {
+    #[serde(skip)]
     synth: Synth,
-    // routines for adding/removing soundfont is messy, so manage states by ourselves
+    // Synth's internal soundfont/preset state is hard to probe, so we manage JS facing state by ourselves
+    #[serde(skip)]
     soundfonts: HashMap<String, SoundFont>,
     current_soundfont: String,
     current_preset_id: String, // TODO
