@@ -329,12 +329,13 @@ function SoundfontSelectComponent({
           {/* prettier-ignore */}
           <div className="text-sm px-2 text-[var(--colorTextSecondary)]">
             You can find free soundfont files in <a className="link" href="https://github.com/FluidSynth/fluidsynth/wiki/SoundFont" target="_blank">FluidSynth Wiki</a> or <a className="link" href="https://musical-artifacts.com" target="_blank">musical-artifacts.com</a>.<br/>
+            Example: <a className="link" href="http://deb.debian.org/debian/pool/main/f/fluid-soundfont/fluid-soundfont_3.1.orig.tar.gz" target="_blank">fluid-soundfont (129MB)</a>
           </div>
         </div>
         <input
           className="mb-2"
           type="file"
-          accept=".sf2,.zip"
+          accept=".sf2,.zip,.tar.gz"
           {...form.register("fileList")}
         />
         <select {...form.register("soundfontName")}>

@@ -118,6 +118,54 @@ impl SoundfontPlayer {
         Ok(())
     }
 
+    pub fn add_soundfonts_from_file(
+        &mut self,
+        file_name: &str,
+        file_data: &[u8],
+    ) -> Result<(), JsError> {
+        let mut found = false;
+        if file_name.ends_with(".sf2") {
+            self.add_soundfont(file_name, file_data)?;
+            found = true;
+        }
+        if file_name.ends_with(".tar.gz") {
+            let decoded = flate2::read::GzDecoder::new(file_data);
+            let mut archive = tar::Archive::new(decoded);
+            for entry in archive.entries()? {
+                let mut entry = entry?;
+                let path = entry.path()?;
+                let basename = path
+                    .file_name()
+                    .map_or_else(|| Err(JsError::new("invalid file")), Ok)?
+                    .to_string_lossy()
+                    .into_owned();
+                if basename.ends_with("sf2") {
+                    let mut cursor = Cursor::new(Vec::new());
+                    std::io::copy(&mut entry, &mut cursor)?;
+                    self.add_soundfont(&basename, cursor.get_ref())?;
+                    found = true;
+                }
+            }
+        }
+        if file_name.ends_with(".zip") {
+            let mut archive = zip::ZipArchive::new(Cursor::new(file_data))?;
+            for i in 0..archive.len() {
+                let mut file = archive.by_index(i)?;
+                if file.name().ends_with(".sf2") {
+                    let mut cursor = Cursor::new(Vec::new());
+                    std::io::copy(&mut file, &mut cursor)?;
+                    self.add_soundfont(file.name(), cursor.get_ref())?;
+                    found = true;
+                }
+            }
+        }
+        if found {
+            Ok(())
+        } else {
+            Err(JsError::new("invalid file"))
+        }
+    }
+
     pub fn set_preset(&mut self, soundfont_id: &str, preset_id: &str) -> Result<(), JsError> {
         // find preset
         let soundfont = self
