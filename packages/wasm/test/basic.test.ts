@@ -102,4 +102,49 @@ describe("SoundfontPlayer", () => {
       ).toThrowErrorMatchingInlineSnapshot('"failed to load soundfont data"');
     });
   });
+
+  describe("add_soundfonts_from_file", () => {
+    it("success", async () => {
+      const soundfontPlayer = SoundfontPlayer.new(48000);
+      const archive = await fs.promises.readFile("misc/sin.tar.gz");
+      soundfontPlayer.add_soundfonts_from_file("sin.tar.gz", archive);
+      expect(soundfontPlayer.get_state()).toMatchInlineSnapshot(`
+        {
+          "current_preset": {
+            "bank": 0,
+            "id": "sin.sf2 (default)-Sine Wave-0-0",
+            "name": "Sine Wave",
+            "preset_num": 0,
+            "soundfont_id": "sin.sf2 (default)",
+          },
+          "soundfonts": [
+            {
+              "id": "sin.sf2 (default)",
+              "presets": [
+                {
+                  "bank": 0,
+                  "id": "sin.sf2 (default)-Sine Wave-0-0",
+                  "name": "Sine Wave",
+                  "preset_num": 0,
+                  "soundfont_id": "sin.sf2 (default)",
+                },
+              ],
+            },
+            {
+              "id": "sin.sf2",
+              "presets": [
+                {
+                  "bank": 0,
+                  "id": "sin.sf2-Sine Wave-0-0",
+                  "name": "Sine Wave",
+                  "preset_num": 0,
+                  "soundfont_id": "sin.sf2",
+                },
+              ],
+            },
+          ],
+        }
+      `);
+    });
+  });
 });

@@ -32,7 +32,7 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
   }
 
   addSoundfont(name: string, data: ArrayBuffer): void {
-    soundfontPlayer.add_soundfont(name, new Uint8Array(data));
+    soundfontPlayer.add_soundfonts_from_file(name, new Uint8Array(data));
   }
 
   setPreset(soundfontId: string, presetId: string): void {
