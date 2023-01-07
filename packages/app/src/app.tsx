@@ -124,7 +124,7 @@ function AppInner() {
               className="btn btn-ghost flex items-center"
               onClick={() => audio.audioContext.resume()}
             >
-              <span className="i-ri-volume-up-line w-6 h-6"></span>
+              <span className="i-ri-shut-down-line w-6 h-6"></span>
             </button>
           ),
           duration: Infinity,
@@ -180,12 +180,12 @@ function AppInner() {
               }
             }}
           >
-            {audioState === "suspended" && (
-              <span className="i-ri-volume-mute-line w-6 h-6"></span>
-            )}
-            {audioState === "running" && (
-              <span className="i-ri-volume-up-line w-6 h-6"></span>
-            )}
+            <span
+              className={cls(
+                "i-ri-shut-down-line w-6 h-6",
+                audioState === "running" && "text-[var(--colorPrimary)]"
+              )}
+            ></span>
           </button>
           <ThemeSelectButton />
           <a
