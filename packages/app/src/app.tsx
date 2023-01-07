@@ -320,13 +320,23 @@ function SoundfontSelectComponent({
       <div className="flex flex-col gap-2 px-4">
         {/* TODO: how to suggest to use FluidR3_GM.sf2 by default? */}
         <div className="flex flex-col">
-          <span className="text-lg">Soundfont</span>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">Soundfont</span>
+            {addSoundfontMutation.isLoading && (
+              <span className="spinner w-4 h-4"></span>
+            )}
+          </div>
           {/* prettier-ignore */}
           <div className="text-sm px-2 text-[var(--colorTextSecondary)]">
             You can find free soundfont files in <a className="link" href="https://github.com/FluidSynth/fluidsynth/wiki/SoundFont" target="_blank">FluidSynth Wiki</a> or <a className="link" href="https://musical-artifacts.com" target="_blank">musical-artifacts.com</a>.<br/>
           </div>
         </div>
-        <input className="mb-2" type="file" {...form.register("fileList")} />
+        <input
+          className="mb-2"
+          type="file"
+          accept=".sf2,.zip"
+          {...form.register("fileList")}
+        />
         <select {...form.register("soundfontName")}>
           <option value="">-- select --</option>
           {getStateQuery.isSuccess &&
