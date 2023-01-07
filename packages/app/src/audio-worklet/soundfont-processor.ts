@@ -18,7 +18,7 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
   }
 
   getState() {
-    return soundfontPlayer.get_state_v2();
+    return soundfontPlayer.get_state();
   }
 
   noteOn(key: number) {
@@ -32,11 +32,11 @@ export class SoundfontProcessor extends AudioWorkletProcessor {
   }
 
   addSoundfont(name: string, data: ArrayBuffer): void {
-    soundfontPlayer.add_soundfont_v2(name, new Uint8Array(data));
+    soundfontPlayer.add_soundfont(name, new Uint8Array(data));
   }
 
   setPreset(soundfontId: string, presetId: string): void {
-    soundfontPlayer.set_preset_v2(soundfontId, presetId);
+    soundfontPlayer.set_preset(soundfontId, presetId);
   }
 
   override process(

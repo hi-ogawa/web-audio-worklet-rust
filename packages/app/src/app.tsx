@@ -330,7 +330,7 @@ function SoundfontSelectComponent({
         <select {...form.register("soundfontName")}>
           <option value="">-- select --</option>
           {getStateQuery.isSuccess &&
-            getStateQuery.data.soundfonts_v2.map((soundfont) => (
+            getStateQuery.data.soundfonts.map((soundfont) => (
               <option key={soundfont.id} value={soundfont.id}>
                 {soundfont.id}
               </option>
@@ -346,7 +346,7 @@ function SoundfontSelectComponent({
           }}
         >
           <option>-- select --</option>
-          {getStateQuery.data?.soundfonts_v2
+          {getStateQuery.data?.soundfonts
             .find((f) => f.id === soundfontName)
             ?.presets.map((preset) => (
               <option key={preset.id} value={preset.id}>
