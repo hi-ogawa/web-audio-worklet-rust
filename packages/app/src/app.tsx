@@ -198,8 +198,8 @@ function AppInner() {
         </div>
       </header>
       <Drawer open={menuOpen} onClose={() => setMenuOpen(false)}>
-        <div className="flex flex-col py-2 gap-4">
-          <div className="pl-5 py-1">
+        <div className="h-full flex flex-col py-2 gap-4">
+          <div className="flex-none pl-5 py-1">
             <button
               className="btn btn-ghost flex items-center"
               onClick={() => setMenuOpen(false)}
@@ -207,18 +207,20 @@ function AppInner() {
               <span className="i-ri-menu-line w-5 h-5"></span>
             </button>
           </div>
-          {/* TOOD: this UI doesn't have to be in drawer unless it is in small screen device */}
-          {/* TODO: maybe use drawer but non-overlay type? */}
-          <SoundfontSelectComponent
-            processor={soundfontProcessorQuery.data?.processor}
-          />
-          {/* TODO: gain control */}
-          <div className="hidden border-t mx-2"></div>
-          <div className="hidden! flex flex-col gap-2 px-4">
-            <span>
-              Gain <span className="text-gray-400">= 0.5 dB</span>
-            </span>
-            <input type="range" min="-20" max="10" step="0.5" />
+          <div className="flex-1 flex flex-col py-2 gap-4 overflow-x-auto">
+            {/* TOOD: this UI doesn't have to be in drawer unless it is in small screen device */}
+            {/* TODO: maybe use drawer but non-overlay type? */}
+            <SoundfontSelectComponent
+              processor={soundfontProcessorQuery.data?.processor}
+            />
+            {/* TODO: gain control */}
+            <div className="hidden border-t mx-2"></div>
+            <div className="hidden! flex flex-col gap-2 px-4">
+              <span>
+                Gain <span className="text-gray-400">= 0.5 dB</span>
+              </span>
+              <input type="range" min="-20" max="10" step="0.5" />
+            </div>
           </div>
         </div>
       </Drawer>
